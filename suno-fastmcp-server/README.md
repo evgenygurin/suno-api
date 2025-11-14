@@ -1,19 +1,37 @@
 # Suno AI FastMCP Server
 
-> **FastMCP server for Suno AI music generation** - Generate music, lyrics, and process audio through the Model Context Protocol (MCP)
+> **FastMCP server for Suno AI music generation** - Complete music production workflow through the Model Context Protocol (MCP)
 
-A powerful MCP server that exposes Suno AI's music generation capabilities to any MCP-compatible client (Claude Desktop, Cline, etc.). Generate professional-quality music from text descriptions, create custom songs with detailed parameters, generate lyrics, and process audio.
+A powerful MCP server exposing **16 Suno AI tools** (80% API coverage) to any MCP-compatible client (Claude Desktop, Cline, etc.). From simple text descriptions to professional-grade music production - generate, transform, extend, and export music with full creative control.
 
 ## 🎵 Features
 
+### Core Music Generation
 - **🎼 Music Generation**: Create music from simple text prompts
 - **🎨 Custom Generation**: Fine-tune music with style, title, and tags
 - **✍️ Lyrics Generation**: Generate song lyrics from descriptions
-- **🎤 Stem Separation**: Extract vocals and instrumentals
+
+### Music Transformation & Extension 🆕
+- **🎸 Extend Music**: AI-powered track extension with coherence
+- **🎭 Cover Music**: Create cover versions in different styles
+- **📤 Upload & Transform**: Upload external audio and transform style
+- **🎤 Add Vocals**: Transform instrumentals into vocal tracks
+- **🎹 Add Instrumental**: Generate backing for vocals/acapella
+
+### Audio Processing
+- **🎧 Stem Separation**: Extract vocals and instrumentals
+- **💿 WAV Conversion**: Export to professional WAV format (44.1kHz, 16-bit) 🆕
 - **⏱️ Timestamped Lyrics**: Get karaoke-ready lyrics with timing
+
+### Management & Monitoring
 - **📊 Credit Management**: Monitor API usage and quotas
+- **🔍 Status Tracking**: Real-time generation progress monitoring
+- **⚙️ API Health**: System status and model information
+
+### Technical Excellence
 - **🚀 Fast & Type-Safe**: Built with TypeScript and Zod validation
 - **🔄 Async Support**: Handle long-running generations efficiently
+- **📝 Comprehensive Docs**: 16 tools fully documented
 
 ## 📋 Prerequisites
 
@@ -126,6 +144,73 @@ Generate music with detailed customization.
 }
 ```
 
+### Music Transformation & Extension 🆕
+
+#### `extend_music`
+Extend existing music tracks with AI-powered continuation.
+
+**Parameters:**
+- `task_id` (string, required): Original song task ID
+- `audio_id` (string, required): Original audio ID
+- `prompt` (string, optional): Guidance for extension
+- `continue_at` (number, optional): Start timestamp in seconds
+- `model` (string, optional): Model version
+
+**Credits:** 15-25 per extension | **Time:** 60-180 seconds
+
+#### `cover_music`
+Create cover version of Suno track in different style.
+
+**Parameters:**
+- `task_id` (string, required): Original song task ID
+- `audio_id` (string, required): Original audio ID
+- `prompt` (string, optional): Cover interpretation description
+- `style` (string, optional): Target musical style
+- `title` (string, optional): Cover title
+- `model` (string, optional): Model version
+
+**Credits:** 15-20 per cover | **Time:** 90-180 seconds
+
+#### `upload_cover`
+Upload external audio and transform to different style.
+
+**Parameters:**
+- `upload_url` (string, required): Public audio file URL (MP3/WAV/FLAC/OGG, max 10MB)
+- `style` (string, required): Target musical style/genre
+- `title` (string, required): Track title (max 80 chars)
+- `prompt` (string, optional): Transformation description
+- `audio_weight` (number, optional): Preservation level 0.0-1.0 (0=new, 1=preserve)
+- `style_weight` (number, optional): Style influence 0.0-1.0
+- `model` (string, optional): Model version
+- Additional parameters: `custom_mode`, `instrumental`, `negative_tags`, `vocal_gender`, `weirdness_constraint`
+
+**Credits:** 20-30 per conversion | **Time:** 90-240 seconds
+
+#### `add_vocals`
+Add AI-generated vocals to instrumental tracks.
+
+**Parameters:**
+- `prompt` (string, required): Vocal/lyrical concept
+- Either (`task_id` + `audio_id`) OR `upload_url` (required): Source instrumental
+- `style` (string, optional): Vocal style/genre
+- `title` (string, optional): Track title
+- `vocal_gender` (enum, optional): "m" or "f"
+- `model` (string, optional): Model version
+
+**Credits:** 20-30 per track | **Time:** 90-180 seconds
+
+#### `add_instrumental`
+Generate instrumental accompaniment for vocals/acapella.
+
+**Parameters:**
+- `style` (string, required): Instrumental style/genre
+- Either (`task_id` + `audio_id`) OR `upload_url` (required): Source vocals
+- `prompt` (string, optional): Instrumental description
+- `title` (string, optional): Track title
+- `model` (string, optional): Model version
+
+**Credits:** 20-30 per track | **Time:** 90-180 seconds
+
 ### Information & Status
 
 #### `get_audio_info`
@@ -175,6 +260,26 @@ Separate vocals and instruments (vocal removal).
 **Parameters:**
 - `song_id` (string, required): Task/song ID from completed generation
 
+**Credits:** 5-10 per separation | **Time:** 20-160 seconds
+
+#### `convert_to_wav` 🆕
+Convert MP3 to high-quality WAV format.
+
+**Parameters:**
+- `task_id` (string, required): Song task ID
+- `audio_id` (string, required): Audio ID
+
+**Output:** 44.1kHz, 16-bit, Stereo WAV
+**Credits:** 2-5 per conversion | **Time:** 10-30 seconds
+
+#### `get_wav_details` 🆕
+Check WAV conversion status and get download URL.
+
+**Parameters:**
+- `task_id` (string, required): WAV conversion task ID (from convert_to_wav)
+
+**Returns:** Status, wavUrl, fileSize, duration, errorMessage
+
 ### Utility Tools
 
 #### `list_models`
@@ -191,7 +296,7 @@ Check API health and configuration.
 
 ### Example 1: Quick Music Generation
 
-```
+```text
 User: Generate an upbeat pop song about summer
 Claude: [Uses generate_music tool]
 Result: Task ID returned, use get_audio_info to check status
@@ -199,7 +304,7 @@ Result: Task ID returned, use get_audio_info to check status
 
 ### Example 2: Custom Song with Lyrics
 
-```
+```sql
 User: Create a jazz song called "Midnight Blues" with saxophone
 Claude: [Uses generate_custom_music tool]
 Parameters:
@@ -211,7 +316,7 @@ Parameters:
 
 ### Example 3: Workflow - Generate Lyrics First
 
-```
+```text
 1. Use generate_lyrics:
    - prompt: "a motivational song about overcoming challenges"
 
@@ -223,7 +328,7 @@ Parameters:
 
 ### Example 4: Check Status and Extract Stems
 
-```
+```text
 1. Use get_audio_info:
    - task_ids: ["task_abc123"]
    - Check status is "SUCCESS"
@@ -445,7 +550,7 @@ docker run -e SUNO_API_KEY=your_key suno-fastmcp
 ## 📝 Development
 
 ### Project Structure
-```
+```text
 suno-fastmcp-server/
 ├── src/
 │   ├── index.ts          # Main server and tools

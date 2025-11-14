@@ -332,4 +332,341 @@ export class SunoClient {
       throw error;
     }
   }
+
+  // ============================================================================
+  // MUSIC EXTENSION & MODIFICATION
+  // ============================================================================
+
+  /**
+   * Extend existing music track
+   */
+  public async extendMusic(
+    taskId: string,
+    audioId: string,
+    prompt?: string,
+    continueAt?: number,
+    model?: string
+  ): Promise<AudioInfo[]> {
+    try {
+      const payload: any = {
+        taskId,
+        audioId,
+      };
+
+      if (prompt) {
+        payload.prompt = prompt;
+      }
+
+      if (continueAt !== undefined) {
+        payload.continueAt = continueAt;
+      }
+
+      if (model) {
+        payload.model = this.mapModelName(model);
+      }
+
+      logger.info({ payload }, 'Extending music');
+
+      const response = await this.client.post<TaskResponse>('/generate/extend', payload);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      const newTaskId = response.data.data.taskId;
+
+      return [{
+        id: newTaskId,
+        original_song_id: taskId,
+        status: 'GENERATING',
+        created_at: new Date().toISOString(),
+        model_name: this.mapModelName(model) || '',
+      } as AudioInfo];
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error extending music');
+      throw error;
+    }
+  }
+
+  /**
+   * Upload audio and create cover in different style
+   */
+  public async uploadCover(
+    uploadUrl: string,
+    style: string,
+    title: string,
+    options?: {
+      prompt?: string;
+      customMode?: boolean;
+      instrumental?: boolean;
+      model?: string;
+      negativeTags?: string;
+      vocalGender?: 'm' | 'f';
+      styleWeight?: number;
+      weirdnessConstraint?: number;
+      audioWeight?: number;
+    }
+  ): Promise<AudioInfo[]> {
+    try {
+      const payload: any = {
+        uploadUrl,
+        style,
+        title,
+        customMode: options?.customMode ?? true,
+        instrumental: options?.instrumental ?? false,
+      };
+
+      if (options?.prompt) payload.prompt = options.prompt;
+      if (options?.model) payload.model = this.mapModelName(options.model);
+      if (options?.negativeTags) payload.negativeTags = options.negativeTags;
+      if (options?.vocalGender) payload.vocalGender = options.vocalGender;
+      if (options?.styleWeight !== undefined) payload.styleWeight = options.styleWeight;
+      if (options?.weirdnessConstraint !== undefined) payload.weirdnessConstraint = options.weirdnessConstraint;
+      if (options?.audioWeight !== undefined) payload.audioWeight = options.audioWeight;
+
+      logger.info({ payload }, 'Uploading and covering audio');
+
+      const response = await this.client.post<TaskResponse>('/generate/upload-cover', payload);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      const taskId = response.data.data.taskId;
+
+      return [{
+        id: taskId,
+        title,
+        tags: style,
+        status: 'GENERATING',
+        created_at: new Date().toISOString(),
+        model_name: this.mapModelName(options?.model) || '',
+      } as AudioInfo];
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error uploading cover');
+      throw error;
+    }
+  }
+
+  /**
+   * Create cover of existing Suno track
+   */
+  public async coverMusic(
+    taskId: string,
+    audioId: string,
+    options?: {
+      prompt?: string;
+      style?: string;
+      title?: string;
+      model?: string;
+    }
+  ): Promise<AudioInfo[]> {
+    try {
+      const payload: any = {
+        taskId,
+        audioId,
+      };
+
+      if (options?.prompt) payload.prompt = options.prompt;
+      if (options?.style) payload.style = options.style;
+      if (options?.title) payload.title = options.title;
+      if (options?.model) payload.model = this.mapModelName(options.model);
+
+      logger.info({ payload }, 'Creating cover version');
+
+      const response = await this.client.post<TaskResponse>('/generate/cover', payload);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      const newTaskId = response.data.data.taskId;
+
+      return [{
+        id: newTaskId,
+        original_song_id: taskId,
+        title: options?.title,
+        tags: options?.style,
+        status: 'GENERATING',
+        created_at: new Date().toISOString(),
+        model_name: this.mapModelName(options?.model) || '',
+      } as AudioInfo];
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error creating cover');
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // VOCAL & INSTRUMENTAL ADDITION
+  // ============================================================================
+
+  /**
+   * Add vocals to instrumental track
+   */
+  public async addVocals(
+    prompt: string,
+    options: {
+      taskId?: string;
+      audioId?: string;
+      uploadUrl?: string;
+      style?: string;
+      title?: string;
+      vocalGender?: 'm' | 'f';
+      model?: string;
+    }
+  ): Promise<AudioInfo[]> {
+    try {
+      if (!options.taskId && !options.uploadUrl) {
+        throw new Error('Either taskId or uploadUrl must be provided');
+      }
+
+      const payload: any = {
+        prompt,
+      };
+
+      if (options.taskId) {
+        payload.taskId = options.taskId;
+        payload.audioId = options.audioId || options.taskId;
+      }
+
+      if (options.uploadUrl) {
+        payload.uploadUrl = options.uploadUrl;
+      }
+
+      if (options.style) payload.style = options.style;
+      if (options.title) payload.title = options.title;
+      if (options.vocalGender) payload.vocalGender = options.vocalGender;
+      if (options.model) payload.model = this.mapModelName(options.model);
+
+      logger.info({ payload }, 'Adding vocals');
+
+      const response = await this.client.post<TaskResponse>('/generate/add-vocals', payload);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      const taskId = response.data.data.taskId;
+
+      return [{
+        id: taskId,
+        original_song_id: options.taskId,
+        title: options.title,
+        tags: options.style,
+        status: 'GENERATING',
+        created_at: new Date().toISOString(),
+        model_name: this.mapModelName(options.model) || '',
+      } as AudioInfo];
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error adding vocals');
+      throw error;
+    }
+  }
+
+  /**
+   * Add instrumental accompaniment to vocals
+   */
+  public async addInstrumental(
+    style: string,
+    options: {
+      taskId?: string;
+      audioId?: string;
+      uploadUrl?: string;
+      prompt?: string;
+      title?: string;
+      model?: string;
+    }
+  ): Promise<AudioInfo[]> {
+    try {
+      if (!options.taskId && !options.uploadUrl) {
+        throw new Error('Either taskId or uploadUrl must be provided');
+      }
+
+      const payload: any = {
+        style,
+      };
+
+      if (options.taskId) {
+        payload.taskId = options.taskId;
+        payload.audioId = options.audioId || options.taskId;
+      }
+
+      if (options.uploadUrl) {
+        payload.uploadUrl = options.uploadUrl;
+      }
+
+      if (options.prompt) payload.prompt = options.prompt;
+      if (options.title) payload.title = options.title;
+      if (options.model) payload.model = this.mapModelName(options.model);
+
+      logger.info({ payload }, 'Adding instrumental');
+
+      const response = await this.client.post<TaskResponse>('/generate/add-instrumental', payload);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      const taskId = response.data.data.taskId;
+
+      return [{
+        id: taskId,
+        original_song_id: options.taskId,
+        title: options.title,
+        tags: style,
+        status: 'GENERATING',
+        created_at: new Date().toISOString(),
+        model_name: this.mapModelName(options.model) || '',
+      } as AudioInfo];
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error adding instrumental');
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // AUDIO PROCESSING
+  // ============================================================================
+
+  /**
+   * Convert audio to WAV format
+   */
+  public async convertToWAV(taskId: string, audioId: string): Promise<{ taskId: string }> {
+    try {
+      const response = await this.client.post('/generate/convert-to-wav', {
+        taskId,
+        audioId,
+      });
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      return {
+        taskId: response.data.data.taskId,
+      };
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error converting to WAV');
+      throw error;
+    }
+  }
+
+  /**
+   * Get WAV conversion status and download URL
+   */
+  public async getWAVConversionDetails(taskId: string): Promise<object> {
+    try {
+      const response = await this.client.get(`/generate/wav-conversion-info?taskId=${taskId}`);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error getting WAV conversion details');
+      throw error;
+    }
+  }
 }
