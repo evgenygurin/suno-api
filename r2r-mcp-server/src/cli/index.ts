@@ -8,7 +8,7 @@ import { Command } from 'commander';
 import { config } from 'dotenv';
 import { spawn } from 'child_process';
 import logger from '../logger.js';
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { runIngestion } from '../ingestion/pipeline.js';
 
 // Load environment
@@ -197,6 +197,7 @@ memoryCommand
       const { storeExperience } = await import('../tools/memory.js');
       
       const result = await storeExperience({
+        timestamp: new Date().toISOString(),
         context: {
           task: options.task,
         },

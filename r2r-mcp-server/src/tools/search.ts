@@ -2,7 +2,7 @@
  * MCP Tools for documentation search
  */
 
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { createModuleLogger } from '../logger.js';
 import { SearchRequestSchema, type ToolResult, type SearchResult } from '../types.js';
 

@@ -2,7 +2,7 @@
  * MCP Tools for GraphRAG - Knowledge Graph Operations
  */
 
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { createModuleLogger } from '../logger.js';
 import {
   GraphQueryRequestSchema,

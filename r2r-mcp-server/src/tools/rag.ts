@@ -2,7 +2,7 @@
  * MCP Tools for RAG (Retrieval-Augmented Generation)
  */
 
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { createModuleLogger } from '../logger.js';
 import { RAGRequestSchema, type ToolResult, type RAGResponse } from '../types.js';
 

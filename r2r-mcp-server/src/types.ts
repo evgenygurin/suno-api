@@ -16,6 +16,8 @@ export const DocumentMetadataSchema = z.object({
   language: z.string().optional(),
   dependencies: z.array(z.string()).optional(),
   exports: z.array(z.string()).optional(),
+  chunk_index: z.number().optional(),
+  total_chunks: z.number().optional(),
 });
 
 export type DocumentMetadata = z.infer<typeof DocumentMetadataSchema>;

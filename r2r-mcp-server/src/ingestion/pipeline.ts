@@ -4,12 +4,16 @@
  * Scans project and ingests documentation into R2R
  */
 
+import { config } from 'dotenv';
 import { readFileSync, statSync } from 'fs';
-import { join, relative, extname } from 'path';
+import { join, extname } from 'path';
 import { glob } from 'glob';
 import matter from 'gray-matter';
 import { createModuleLogger } from '../logger.js';
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
+
+// Load environment variables
+config();
 import { chunkDocument } from './chunking.js';
 import { buildKnowledgeGraph } from './graph-builder.js';
 import type { DocumentMetadata, IngestionRequest } from '../types.js';
@@ -93,14 +97,14 @@ function getProjectSection(filePath: string): DocumentMetadata['project_section'
 function extractMetadata(
   filePath: string,
   content: string,
-  stats: ReturnType<typeof statSync>
+  stats: ReturnType<typeof statSync> | undefined
 ): DocumentMetadata {
   const fileType = getFileType(filePath);
-  
+
   let metadata: DocumentMetadata = {
     file_path: filePath,
     file_type: fileType,
-    last_modified: stats.mtime.toISOString(),
+    last_modified: stats?.mtime.toISOString() || new Date().toISOString(),
     project_section: getProjectSection(filePath),
   };
 
@@ -262,44 +266,71 @@ async function processFile(
 }
 
 /**
- * Ingest documents into R2R
+ * Ingest documents into R2R using SDK
  */
 async function ingestDocuments(requests: IngestionRequest[]): Promise<void> {
   logger.info({ count: requests.length }, 'Ingesting documents');
 
   const client = getR2RClient();
-  
-  // Batch ingestion (100 at a time for efficiency)
-  const batchSize = 100;
+
+  // Group chunks by file path (remove chunk suffix)
+  const fileGroups = new Map<string, IngestionRequest[]>();
+  for (const req of requests) {
+    const filePath = req.document_id.split('#')[0];
+    if (!fileGroups.has(filePath)) {
+      fileGroups.set(filePath, []);
+    }
+    fileGroups.get(filePath)!.push(req);
+  }
+
   let ingested = 0;
   let failed = 0;
 
-  for (let i = 0; i < requests.length; i += batchSize) {
-    const batch = requests.slice(i, i + batchSize);
-    
+  // Ingest each file with its chunks
+  for (const [filePath, chunks] of fileGroups) {
     try {
-      const response = await client.ingestDocuments(batch);
-      
-      if (response.success) {
-        ingested += batch.length;
-        logger.info({ 
-          progress: `${ingested}/${requests.length}`,
-          percentage: Math.round((ingested / requests.length) * 100)
-        }, 'Batch ingested');
-      } else {
-        failed += batch.length;
-        logger.error({ error: response.error }, 'Batch ingestion failed');
-      }
+      // Sort chunks by index to maintain order
+      const sortedChunks = chunks.sort((a, b) =>
+        (a.metadata.chunk_index || 0) - (b.metadata.chunk_index || 0)
+      );
+
+      // Use SDK's documents.create with pre-chunked content
+      // Suno collection UUID: 77b761f2-5676-40a6-beb2-fc58ac32c4af
+      await client.documents.create({
+        chunks: sortedChunks.map(c => c.content),
+        metadata: {
+          ...sortedChunks[0].metadata,
+          total_chunks: sortedChunks.length,
+          file_path: filePath,
+        },
+        collectionIds: ['77b761f2-5676-40a6-beb2-fc58ac32c4af'],  // Suno collection UUID
+      });
+
+      ingested += chunks.length;
+      logger.info({
+        file: filePath,
+        chunks: chunks.length,
+        progress: `${ingested}/${requests.length}`,
+        percentage: Math.round((ingested / requests.length) * 100)
+      }, 'File ingested');
     } catch (error) {
-      failed += batch.length;
-      logger.error({ error }, 'Batch ingestion error');
+      failed += chunks.length;
+      logger.error({
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : error,
+        file: filePath
+      }, 'File ingestion failed');
     }
   }
 
-  logger.info({ 
+  logger.info({
     total: requests.length,
     ingested,
-    failed 
+    failed,
+    files: fileGroups.size
   }, 'Ingestion completed');
 }
 

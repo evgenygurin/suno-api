@@ -13,7 +13,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import logger, { createModuleLogger } from './logger.js';
-import { getR2RClient } from './r2r-client.js';
+import { getR2RClient } from './r2r-client-sdk.js';
 
 // Import tools
 import { searchDocumentation, searchCodeExamples, findTestExamples } from './tools/search.js';

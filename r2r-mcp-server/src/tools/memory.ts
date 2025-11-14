@@ -3,7 +3,7 @@
  * Stores and retrieves development experiences for learning
  */
 
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { createModuleLogger } from '../logger.js';
 import {
   StoreExperienceRequestSchema,
@@ -227,7 +227,7 @@ export async function reflectOnPatterns(params: {
       .map(s => s.metadata.experience_metadata)
       .filter((exp): exp is Experience => exp?.outcome === 'success');
 
-    const patterns = Array.from(
+    const patterns: string[] = Array.from(
       new Set(
         successfulExperiences
           .map(exp => exp.learned_pattern)

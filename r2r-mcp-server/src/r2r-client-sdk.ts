@@ -24,13 +24,119 @@ export function createR2RClient(): r2rClient {
 }
 
 /**
+ * Extended R2R Client with v2 compatibility methods
+ * Transforms SDK v3 responses to v2 format: { success, data, error }
+ */
+class ExtendedR2RClient extends r2rClient {
+  // v2 compatibility: search
+  async search(params: any) {
+    try {
+      const response = await this.retrieval.search(params);
+      // SDK v3 returns CombinedSearchResponse with chunkSearchResults, graphSearchResults, etc.
+      // Extract chunkSearchResults array for backward compatibility
+      const results = (response as any)?.results?.chunkSearchResults || [];
+      return { success: true, data: results };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Search failed' };
+    }
+  }
+
+  // v2 compatibility: ragCompletion
+  async ragCompletion(params: any) {
+    try {
+      const response = await this.retrieval.rag(params);
+      return { success: true, data: response.results || response };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'RAG completion failed' };
+    }
+  }
+
+  // v2 compatibility: healthCheck
+  async healthCheck() {
+    try {
+      const response = await this.system.health();
+      return { success: true, data: response.results || response };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Health check failed' };
+    }
+  }
+
+  // v2 compatibility: ingestDocument
+  async ingestDocument(params: any) {
+    try {
+      const response = await this.documents.create(params);
+      return { success: true, data: response.results || response };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Document ingestion failed' };
+    }
+  }
+
+  // v2 compatibility: queryGraph (not available in SDK v3)
+  async queryGraph(params: any) {
+    try {
+      // Graph querying in v3 SDK uses retrieval.search with graphSearchSettings
+      const response = await this.retrieval.search({
+        query: params.query || '',
+        searchMode: 'custom',
+        searchSettings: {
+          graphSearchSettings: {
+            enabled: true,
+            ...params
+          }
+        }
+      });
+      // Extract graph data from response
+      const graphResults = (response as any)?.results?.graphSearchResults || {};
+      return {
+        success: true,
+        data: {
+          entities: graphResults.entities || [],
+          relationships: graphResults.relationships || []
+        }
+      };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Graph query failed' };
+    }
+  }
+
+  // v2 compatibility: createEntities (batch operation)
+  async createEntities(entities: any[]) {
+    try {
+      // v3 SDK uses createEntity (singular), batch it
+      const results = await Promise.all(
+        entities.map(entity => this.graphs.createEntity(entity))
+      );
+      return { success: true, results };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Create entities failed' };
+    }
+  }
+
+  // v2 compatibility: createRelationships (batch operation)
+  async createRelationships(relationships: any[]) {
+    try {
+      // v3 SDK uses createRelationship (singular), batch it
+      const results = await Promise.all(
+        relationships.map(rel => this.graphs.createRelationship(rel))
+      );
+      return { success: true, results };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Create relationships failed' };
+    }
+  }
+}
+
+/**
  * Singleton instance
  */
-let clientInstance: r2rClient | null = null;
+let clientInstance: ExtendedR2RClient | null = null;
 
-export const getR2RClient = (): r2rClient => {
+export const getR2RClient = (): ExtendedR2RClient => {
   if (!clientInstance) {
-    clientInstance = createR2RClient();
+    const baseUrl = process.env.R2R_BASE_URL || 'http://localhost:7272';
+    const anonymousTelemetry = false;
+    logger.info({ baseUrl: baseUrl.replace(/\/+$/, '') }, 'Initializing Extended R2R SDK client');
+    clientInstance = new ExtendedR2RClient(baseUrl, anonymousTelemetry) as ExtendedR2RClient;
   }
   return clientInstance;
 };
