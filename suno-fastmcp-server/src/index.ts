@@ -18,12 +18,20 @@ config();
 // Validate API key
 const SUNO_API_KEY = process.env.SUNO_API_KEY;
 if (!SUNO_API_KEY) {
-  logger.error('SUNO_API_KEY environment variable is required');
+  console.error('FATAL: SUNO_API_KEY environment variable is required');
   process.exit(1);
 }
 
 // Initialize Suno client
-const sunoClient = new SunoClient(SUNO_API_KEY);
+let sunoClient: SunoClient;
+try {
+  sunoClient = new SunoClient(SUNO_API_KEY);
+  console.error('Suno client initialized successfully');
+} catch (error: any) {
+  console.error('FATAL: Failed to initialize Suno client:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+}
 
 // Create FastMCP server
 const server = new FastMCP({
@@ -31,7 +39,7 @@ const server = new FastMCP({
   version: '1.0.0',
 });
 
-logger.info('Initializing Suno FastMCP Server');
+console.error('Initializing Suno FastMCP Server');
 
 // ============================================================================
 // MUSIC GENERATION TOOLS
@@ -64,13 +72,13 @@ server.addTool({
         success: true,
         data: result,
         message: args.wait_audio ? 'Music generated successfully' : 'Music generation started. Use get_audio_info to check status.',
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in generate_music');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -108,13 +116,13 @@ server.addTool({
         success: true,
         data: result,
         message: args.wait_audio ? 'Custom music generated successfully' : 'Custom music generation started.',
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in generate_custom_music');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -142,13 +150,13 @@ server.addTool({
         success: true,
         data: result,
         message: `Retrieved information for ${result.length} task(s)`,
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in get_audio_info');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -170,13 +178,13 @@ server.addTool({
         success: true,
         data: result,
         message: `You have ${result.credits_left} credits remaining`,
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in get_credits');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -204,13 +212,13 @@ server.addTool({
         success: true,
         data: { lyrics: result },
         message: 'Lyrics generated successfully',
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in generate_lyrics');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -234,13 +242,13 @@ server.addTool({
         success: true,
         data: result,
         message: 'Retrieved timestamped lyrics',
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in get_timestamped_lyrics');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -268,13 +276,13 @@ server.addTool({
         success: true,
         data: result,
         message: 'Stem separation started. Use get_audio_info to check status.',
-      }, null, 2);
+      });
     } catch (error: any) {
       logger.error({ error: error.message }, 'Error in generate_stems');
       return JSON.stringify({
         success: false,
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -330,7 +338,7 @@ server.addTool({
       success: true,
       data: { models, default: DEFAULT_MODEL },
       message: `${models.length} models available`,
-    }, null, 2);
+    });
   },
 });
 
@@ -357,7 +365,7 @@ server.addTool({
           base_url: 'https://api.sunoapi.org/api/v1',
         },
         message: 'API is operational',
-      }, null, 2);
+      });
     } catch (error: any) {
       return JSON.stringify({
         success: false,
@@ -366,7 +374,7 @@ server.addTool({
           api_key_valid: false,
         },
         error: error.message,
-      }, null, 2);
+      });
     }
   },
 });
@@ -375,24 +383,41 @@ server.addTool({
 // START SERVER
 // ============================================================================
 
-logger.info('Starting Suno FastMCP Server...');
+console.error('Starting Suno FastMCP Server...');
 
 server.start({
   transportType: 'stdio',
 }).then(() => {
-  logger.info('Suno FastMCP Server is running on stdio');
-}).catch((error) => {
-  logger.error({ error }, 'Failed to start server');
+  console.error('Suno FastMCP Server is running on stdio');
+}).catch((error: any) => {
+  console.error('FATAL: Failed to start server');
+  console.error('Error message:', error?.message || 'Unknown error');
+  console.error('Error stack:', error?.stack || 'No stack trace');
+  console.error('Full error:', JSON.stringify(error, null, 2));
   process.exit(1);
 });
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
-  logger.info('Shutting down gracefully...');
+  console.error('Received SIGINT, shutting down gracefully...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  logger.info('Shutting down gracefully...');
+  console.error('Received SIGTERM, shutting down gracefully...');
   process.exit(0);
+});
+
+// Handle uncaught errors
+process.on('uncaughtException', (error: Error) => {
+  console.error('FATAL: Uncaught exception');
+  console.error('Error:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  console.error('FATAL: Unhandled promise rejection');
+  console.error('Reason:', reason);
+  process.exit(1);
 });
