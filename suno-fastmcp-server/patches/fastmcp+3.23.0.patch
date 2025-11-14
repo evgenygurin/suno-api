@@ -1,0 +1,31 @@
+diff --git a/node_modules/fastmcp/dist/FastMCP.js b/node_modules/fastmcp/dist/FastMCP.js
+index 8b131b7..0b4ceb0 100644
+--- a/node_modules/fastmcp/dist/FastMCP.js
++++ b/node_modules/fastmcp/dist/FastMCP.js
+@@ -661,7 +661,10 @@ ${error instanceof Error ? error.stack : JSON.stringify(error)}`
+     this.#resourceTemplates.push(resourceTemplate);
+   }
+   setupCompleteHandlers() {
+-    this.#server.setRequestHandler(CompleteRequestSchema, async (request) => {
++    // Skip setting up completion handlers if client doesn't support completions
++    // This prevents errors with clients like Claude that don't advertise completion capability
++    try {
++      this.#server.setRequestHandler(CompleteRequestSchema, async (request) => {
+       if (request.params.ref.type === "ref/prompt") {
+         const prompt = this.#prompts.find(
+           (prompt2) => prompt2.name === request.params.ref.name
+@@ -722,6 +725,14 @@ ${error instanceof Error ? error.stack : JSON.stringify(error)}`
+         request
+       });
+     });
++    } catch (error) {
++      // Client doesn't support completions - this is fine, just skip
++      if (error?.message?.includes('does not support completions')) {
++        console.error('[FastMCP] Client does not support completions capability, skipping completion handlers');
++        return;
++      }
++      throw error;
++    }
+   }
+   setupErrorHandling() {
+     this.#server.onerror = (error) => {

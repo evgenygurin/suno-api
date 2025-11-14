@@ -18,6 +18,9 @@ You have access to these powerful tools:
 - 🔄 **CircleCI**: Advanced CI/CD workflows ✨ **FULLY CONFIGURED**
 - 📋 **Linear**: Issue tracking (optional)
 - 💡 **Cursor AI**: Enhanced editor with MCP ✨ **FULLY CONFIGURED**
+- 🎵 **Suno Music**: FastMCP server for Suno AI music generation ✨ **PATCHED & WORKING**
+
+> **Note**: The Suno Music MCP server includes a critical patch for FastMCP compatibility with Claude. See `suno-fastmcp-server/FASTMCP-PATCH.md` for details.
 
 ### 📖 Documentation Quick Links
 
