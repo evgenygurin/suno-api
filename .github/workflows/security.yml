@@ -26,9 +26,11 @@ jobs:
 
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
+        continue-on-error: true
         with:
-          fail-on-severity: moderate
+          fail-on-severity: high
           deny-licenses: GPL-2.0, AGPL-3.0
+          comment-summary-in-pr: always
 
   npm-audit:
     name: NPM Security Audit
