@@ -19,7 +19,11 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      const audioInfo = await (await sunoApi()).getClip(clipId);
+      // Get API key from Authorization header or environment variable
+      const authHeader = req.headers.get('authorization');
+      const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
+
+      const audioInfo = await (await sunoApi(apiKey)).getClip(clipId);
 
       return new NextResponse(JSON.stringify(audioInfo), {
         status: 200,
@@ -28,11 +32,13 @@ export async function GET(req: NextRequest) {
           ...corsHeaders
         }
       });
-    } catch (error) {
-      console.error('Error fetching audio:', error);
+    } catch (error: any) {
+      console.error('Error fetching audio:', error.response?.data || error.message);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
 
-      return new NextResponse(JSON.stringify({ error: 'Internal server error' }), {
-        status: 500,
+      return new NextResponse(JSON.stringify({ error: errorMessage }), {
+        status,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders

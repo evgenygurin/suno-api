@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from "next/server";
-import { cookies } from 'next/headers'
 import { sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
 
@@ -19,7 +18,12 @@ export async function POST(req: NextRequest) {
           }
         });
       }
-      const audioInfo = await (await sunoApi((await cookies()).toString())).concatenate(clip_id);
+      
+      // Get API key from Authorization header or environment variable
+      const authHeader = req.headers.get('authorization');
+      const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
+      
+      const audioInfo = await (await sunoApi(apiKey)).concatenate(clip_id);
       return new NextResponse(JSON.stringify(audioInfo), {
         status: 200,
         headers: {
@@ -28,18 +32,12 @@ export async function POST(req: NextRequest) {
         }
       });
     } catch (error: any) {
-      console.error('Error generating concatenating audio:', error.response.data);
-      if (error.response.status === 402) {
-        return new NextResponse(JSON.stringify({ error: error.response.data.detail }), {
-          status: 402,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        });
-      }
-      return new NextResponse(JSON.stringify({ error: 'Internal server error' }), {
-        status: 500,
+      console.error('Error concatenating audio:', error.response?.data || error.message);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
+      
+      return new NextResponse(JSON.stringify({ error: errorMessage }), {
+        status,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders

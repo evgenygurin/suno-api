@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from "next/server";
-import { cookies } from 'next/headers'
 import { sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
 
@@ -21,7 +20,11 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      const lyricAlignment = await (await sunoApi((await cookies()).toString())).getLyricAlignment(song_id);
+      // Get API key from Authorization header or environment variable
+      const authHeader = req.headers.get('authorization');
+      const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
+
+      const lyricAlignment = await (await sunoApi(apiKey)).getLyricAlignment(song_id);
 
 
       return new NextResponse(JSON.stringify(lyricAlignment), {
@@ -31,11 +34,13 @@ export async function GET(req: NextRequest) {
           ...corsHeaders
         }
       });
-    } catch (error) {
-      console.error('Error fetching lyric alignment:', error);
+    } catch (error: any) {
+      console.error('Error fetching lyric alignment:', error.response?.data || error.message);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
 
-      return new NextResponse(JSON.stringify({ error: 'Internal server error. ' + error }), {
-        status: 500,
+      return new NextResponse(JSON.stringify({ error: errorMessage }), {
+        status,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders
