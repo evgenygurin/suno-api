@@ -1,0 +1,136 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@6.1.0
+
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:20.11.1
+    resource_class: medium
+    working_directory: ~/suno-api
+    environment:
+      NODE_ENV: production
+      CI: true
+
+commands:
+  restore-workspace:
+    steps:
+      - attach_workspace:
+          at: ~/suno-api
+
+jobs:
+  install-and-cache:
+    executor: node-executor
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          cache-path: ~/.npm
+          override-ci-command: npm ci
+      - persist_to_workspace:
+          root: ~/suno-api
+          paths:
+            - .
+
+  type-check:
+    executor: node-executor
+    steps:
+      - restore-workspace
+      - run:
+          name: TypeScript Type Checking
+          command: npx tsc --noEmit
+
+  lint:
+    executor: node-executor
+    steps:
+      - restore-workspace
+      - run:
+          name: Run ESLint
+          command: npm run lint
+
+  security-audit:
+    executor: node-executor
+    steps:
+      - restore-workspace
+      - run:
+          name: npm Security Audit
+          command: npm audit --audit-level=moderate || true
+
+  build:
+    executor: node-executor
+    steps:
+      - restore-workspace
+      - run:
+          name: Build Next.js Application
+          command: npm run build
+      - run:
+          name: Verify Build Artifacts
+          command: |
+            if [ ! -d ".next" ]; then
+              echo "Error: .next directory not found"
+              exit 1
+            fi
+      - persist_to_workspace:
+          root: ~/suno-api
+          paths:
+            - .next
+            - node_modules
+            - .
+
+  sentry-release:
+    executor: node-executor
+    steps:
+      - restore-workspace
+      - run:
+          name: Install Sentry CLI
+          command: |
+            curl -sL https://sentry.io/get-cli/ | bash
+            sentry-cli --version
+      - run:
+          name: Create Sentry Release
+          command: |
+            export SENTRY_RELEASE="${CIRCLE_SHA1:0:7}"
+            sentry-cli releases new "${SENTRY_RELEASE}"
+            sentry-cli releases set-commits "${SENTRY_RELEASE}" --auto
+            sentry-cli releases finalize "${SENTRY_RELEASE}"
+            sentry-cli releases deploys "${SENTRY_RELEASE}" new -e "${CIRCLE_BRANCH}"
+
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - install-and-cache:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - /feature\/.*/
+
+      - type-check:
+          requires:
+            - install-and-cache
+
+      - lint:
+          requires:
+            - install-and-cache
+
+      - security-audit:
+          requires:
+            - install-and-cache
+
+      - build:
+          requires:
+            - type-check
+            - lint
+            - security-audit
+
+      - sentry-release:
+          requires:
+            - build
+          context:
+            - sentry
+          filters:
+            branches:
+              only: main
