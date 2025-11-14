@@ -25,15 +25,28 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
+
+      - name: Install suno-fastmcp-server dependencies
+        run: |
+          if [ -d "suno-fastmcp-server" ]; then
+            cd suno-fastmcp-server && npm ci
+          fi
 
       - name: Run linter
         run: npm run lint
         continue-on-error: false
 
-      - name: Type check
+      - name: Type check - root project
         run: npx tsc --noEmit
+        continue-on-error: false
+
+      - name: Type check - suno-fastmcp-server
+        run: |
+          if [ -d "suno-fastmcp-server" ]; then
+            cd suno-fastmcp-server && npx tsc --noEmit
+          fi
         continue-on-error: false
 
       - name: Security audit

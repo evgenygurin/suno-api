@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "suno-music": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/suno-fastmcp-server/dist/index.js"
+      ],
+      "env": {
+        "SUNO_API_KEY": "your_suno_api_key_here"
+      }
+    }
+  }
+}

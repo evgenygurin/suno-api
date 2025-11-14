@@ -1,0 +1,40 @@
+{
+  "name": "suno-fastmcp-server",
+  "version": "1.0.0",
+  "description": "FastMCP server for Suno AI music generation API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "suno-fastmcp": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit",
+    "test": "tsx src/index.ts"
+  },
+  "keywords": [
+    "mcp",
+    "fastmcp",
+    "suno",
+    "music-generation",
+    "ai-music",
+    "model-context-protocol"
+  ],
+  "author": "gcui.ai",
+  "license": "LGPL-3.0-or-later",
+  "dependencies": {
+    "fastmcp": "^3.23.0",
+    "zod": "^3.23.8",
+    "axios": "^1.7.8",
+    "dotenv": "^16.4.5",
+    "pino": "^10.1.0",
+    "pino-pretty": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
