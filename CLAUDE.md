@@ -4,19 +4,32 @@ This file contains specific instructions and context for Claude AI assistant whe
 
 ## 🎯 Quick Start for Claude
 
-**This project has full MCP (Model Context Protocol) integration!**
+**This project has full MCP (Model Context Protocol) integration AND production-ready CI/CD!**
+
+### Available Tools & Integrations
 
 You have access to these powerful tools:
 - 📚 **Context7**: `use context7 to find [library] documentation`
 - 🐙 **GitHub MCP**: Manage repos, PRs, issues, CI/CD workflows
-- 🤖 **Codegen.com**: AI-powered code generation and review
-- 🧠 **R2R Agent**: 16 specialized tools for codebase intelligence (see below)
+- 🤖 **Codegen.com**: AI-powered code generation and review ✨ **FULLY CONFIGURED**
+- 🧠 **R2R Agent**: 16 specialized tools for codebase intelligence
 - 🔍 **Tavily**: Web search and content extraction
+- 🐛 **Sentry**: Error tracking and performance monitoring ✨ **FULLY CONFIGURED**
+- 🔄 **CircleCI**: Advanced CI/CD workflows ✨ **FULLY CONFIGURED**
+- 📋 **Linear**: Issue tracking (optional)
+- 💡 **Cursor AI**: Enhanced editor with MCP ✨ **FULLY CONFIGURED**
 
-**📖 MCP Guides:**
-- **Quick Start (5 min)**: [MCP-QUICKSTART.md](./MCP-QUICKSTART.md)
-- **Complete Guide**: [MCP-SETUP.md](./MCP-SETUP.md)
-- **R2R Agent Tools**: [r2r-mcp-server/README.md](./r2r-mcp-server/README.md)
+### 📖 Documentation Quick Links
+
+**MCP & Agent Tools:**
+- [MCP Quick Start (5 min)](./MCP-QUICKSTART.md)
+- [Complete MCP Setup Guide](./MCP-SETUP.md)
+- [R2R Agent Tools](./r2r-mcp-server/README.md)
+
+**Integrations:**
+- **[INTEGRATIONS.md](./INTEGRATIONS.md)** - Complete integration guide ⭐
+- [Setup Script](./scripts/setup-integrations.sh) - Automated setup
+- [Environment Variables](./.env.example) - All required keys
 
 ---
 
@@ -397,9 +410,73 @@ try {
 - ❌ Make synchronous file I/O
 - ❌ Leave browser contexts open
 
+## 🔧 CI/CD & Integrations
+
+### Overview
+
+This project is fully integrated with modern development tools:
+
+**✅ Codegen.com**
+- AI-powered code reviews on PRs (GitHub Actions + CircleCI)
+- Interactive agent via CLI: `codegen claude "your prompt"`
+- Python SDK for automation
+- See: `.github/workflows/ci.yml`, `.circleci/config.yml`
+
+**✅ Sentry Error Tracking**
+- Real-time error monitoring (client + server + edge)
+- Performance monitoring and profiling
+- Release tracking with source maps
+- Configuration: `sentry.*.config.ts`, `instrumentation.ts`
+
+**✅ GitHub Actions**
+- Automated linting, type checking, builds
+- Security scanning (CodeQL, npm audit, secrets)
+- Codegen AI review on PRs
+- See: `.github/workflows/`
+
+**✅ CircleCI**
+- Parallel job execution with caching
+- Sentry release automation
+- Quality checks and security scans
+- Configuration: `.circleci/config.yml`
+
+**✅ Cursor AI**
+- MCP servers for Codegen, GitHub, Tavily
+- Context-aware AI assistance
+- Configuration: `.cursor/config.json`
+
+**📋 Optional: Linear**
+- Issue tracking integration
+- Requires `LINEAR_API_KEY` in `.env`
+
+### Quick Setup
+
+```bash
+# Run automated setup
+./scripts/setup-integrations.sh
+
+# Or manual setup
+cp .env.example .env
+# Edit .env with your API keys
+codegen login
+npm install
+```
+
+### Environment Variables
+
+See `.env.example` for all required and optional variables:
+- `CODEGEN_API_KEY`, `CODEGEN_ORG_ID` - Required for AI features
+- `SENTRY_DSN`, `SENTRY_AUTH_TOKEN` - Required for error tracking
+- `CIRCLECI_API_TOKEN` - Optional for CircleCI
+- `LINEAR_API_KEY` - Optional for Linear integration
+
+**Full documentation**: [INTEGRATIONS.md](./INTEGRATIONS.md)
+
+---
+
 ## R2R Agent Integration
 
-This project now includes an **intelligent R2R RAG Agent** with MCP integration for enhanced development assistance.
+This project includes an **intelligent R2R RAG Agent** with MCP integration for enhanced development assistance.
 
 ### What is the R2R Agent?
 

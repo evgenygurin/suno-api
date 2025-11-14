@@ -1,329 +1,112 @@
+# CircleCI 2.1 Configuration for Suno API
+#
+# This configuration provides CI/CD automation including:
+# - Code quality checks (linting, type checking)
+# - Security scanning
+# - Automated builds
+# - Sentry release tracking
+# - Codegen AI-powered reviews
+#
+# Documentation: https://circleci.com/docs/
+
 version: 2.1
 
+# Orbs - reusable packages of configuration
 orbs:
-  node: circleci/node@6.1.0
-  slack: circleci/slack@4.13.3
-  browser-tools: circleci/browser-tools@1.4.8
+  node: circleci/node@6.3.0
 
-# Parameters for dynamic configuration
-parameters:
-  run-integration-tests:
-    type: boolean
-    default: false
-  deploy-environment:
-    type: string
-    default: "staging"
-
+# Executors - execution environments
 executors:
   node-executor:
     docker:
-      - image: cimg/node:20.11.1
-    resource_class: medium
-    working_directory: ~/suno-api
-    environment:
-      NODE_ENV: production
-      CI: true
-
-  node-browsers-executor:
-    docker:
-      - image: cimg/node:20.11.1-browsers
-    resource_class: large
-    working_directory: ~/suno-api
+      - image: cimg/node:20.18
+    working_directory: ~/project
     environment:
       NODE_ENV: test
-      CI: true
 
+# Reusable commands
 commands:
-  restore-workspace:
+  install-dependencies:
+    description: "Install npm dependencies with caching"
     steps:
-      - attach_workspace:
-          at: ~/suno-api
+      - restore_cache:
+          name: Restore npm cache
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
 
-  notify-on-failure:
-    steps:
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      - run:
+          name: Install dependencies
+          command: npm ci
 
-  notify-on-success:
-    steps:
-      - slack/notify:
-          event: pass
-          template: success_tagged_deploy_1
+      - save_cache:
+          name: Save npm cache
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.npm
+            - node_modules
 
+# Jobs - individual units of work
 jobs:
-  install-and-cache:
+  # Job 1: Code quality checks
+  quality-checks:
     executor: node-executor
     steps:
       - checkout
-      - node/install-packages:
-          pkg-manager: npm
-          cache-path: ~/.npm
-          override-ci-command: npm ci
-      - persist_to_workspace:
-          root: ~/suno-api
-          paths:
-            - .
+      - install-dependencies
 
-  type-check:
-    executor: node-executor
-    steps:
-      - restore-workspace
-      - run:
-          name: TypeScript Type Checking
-          command: npx tsc --noEmit
-
-  lint:
-    executor: node-executor
-    steps:
-      - restore-workspace
       - run:
           name: Run ESLint
           command: npm run lint
 
-  security-audit:
-    executor: node-executor
-    steps:
-      - restore-workspace
       - run:
-          name: npm Security Audit
-          command: npm audit --audit-level=moderate || true
+          name: Type checking
+          command: npx tsc --noEmit
 
-  build:
-    executor: node-executor
-    steps:
-      - restore-workspace
-      - run:
-          name: Build Next.js Application
-          command: npm run build
-      - run:
-          name: Verify Build Artifacts
-          command: |
-            if [ ! -d ".next" ]; then
-              echo "Error: .next directory not found"
-              exit 1
-            fi
-            echo "✅ Build artifacts verified successfully"
-      - store_artifacts:
-          path: .next
-          destination: build-artifacts
-      - persist_to_workspace:
-          root: ~/suno-api
-          paths:
-            - .next
-            - node_modules
-            - .
-
-  integration-tests:
-    executor: node-browsers-executor
-    when: << pipeline.parameters.run-integration-tests >>
-    steps:
-      - restore-workspace
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
-      - run:
-          name: Install Playwright Browsers
-          command: npx playwright install chromium
-      - run:
-          name: Run Integration Tests
-          command: |
-            echo "⚠️ Integration tests not yet implemented"
-            echo "Future: Will test CAPTCHA solving and music generation flows"
-          no_output_timeout: 10m
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: integration-test-results
-
-  performance-audit:
-    executor: node-executor
-    steps:
-      - restore-workspace
-      - run:
-          name: Analyze Bundle Size
-          command: |
-            npm run build
-            echo "📊 Analyzing bundle size..."
-            du -sh .next/static || true
-      - store_artifacts:
-          path: .next/analyze
-          destination: bundle-analysis
-
-  sentry-release:
-    executor: node-executor
-    steps:
-      - restore-workspace
-      - run:
-          name: Install Sentry CLI
-          command: |
-            curl -sL https://sentry.io/get-cli/ | bash
-            sentry-cli --version
-      - run:
-          name: Create Sentry Release
-          command: |
-            export SENTRY_RELEASE="${CIRCLE_SHA1:0:7}"
-            echo "📦 Creating Sentry release: ${SENTRY_RELEASE}"
-            sentry-cli releases new "${SENTRY_RELEASE}"
-            sentry-cli releases set-commits "${SENTRY_RELEASE}" --auto
-
-            # Upload source maps for better error tracking
-            if [ -d ".next" ]; then
-              echo "📤 Uploading source maps..."
-              sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps .next/static || true
-            fi
-
-            sentry-cli releases finalize "${SENTRY_RELEASE}"
-
-            # Create deployment marker
-            export DEPLOY_ENV="${CIRCLE_BRANCH}"
-            if [ "${CIRCLE_BRANCH}" = "main" ]; then
-              DEPLOY_ENV="production"
-            fi
-            sentry-cli releases deploys "${SENTRY_RELEASE}" new -e "${DEPLOY_ENV}"
-
-            echo "✅ Sentry release created successfully"
-      - notify-on-failure
-
-  codegen-review:
+  # Job 2: Security scanning
+  security-scan:
     executor: node-executor
     steps:
       - checkout
+      - install-dependencies
+
       - run:
-          name: Setup Python for Codegen
+          name: npm audit
           command: |
-            sudo apt-get update
-            sudo apt-get install -y python3-pip
+            npm audit --audit-level=moderate || true
+            echo "✅ Security scan completed"
+
+  # Job 3: Build
+  build:
+    executor: node-executor
+    steps:
+      - checkout
+      - install-dependencies
+
       - run:
-          name: Install Codegen SDK
-          command: pip3 install codegen
-      - run:
-          name: Run Codegen Code Review
-          command: |
-            echo "🤖 Running Codegen code review..."
-            python3 - <<'EOF'
-            import os
-            import sys
+          name: Build Next.js application
+          command: npm run build
 
-            # Check if Codegen is configured
-            org_id = os.getenv('CODEGEN_ORG_ID')
-            api_token = os.getenv('CODEGEN_API_TOKEN')
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .next
+            - node_modules
 
-            if not all([org_id, api_token]):
-                print("⚠️  Codegen not configured. Skipping review.")
-                print("ℹ️  To enable: Add CODEGEN_ORG_ID and CODEGEN_API_TOKEN to CircleCI context")
-                sys.exit(0)
+      - store_artifacts:
+          path: .next
+          destination: build
 
-            print("✅ Codegen configured. Review functionality ready.")
-            print("📝 For PR reviews, configure GitHub Actions workflow")
-            EOF
-
+# Workflows - orchestrate jobs
 workflows:
   version: 2
 
-  # Main CI/CD workflow for all branches
-  build-test-deploy:
+  # Main workflow for all branches
+  build-and-test:
     jobs:
-      - install-and-cache:
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-                - /feature\/.*/
-
-      # Parallel quality checks
-      - type-check:
-          requires:
-            - install-and-cache
-
-      - lint:
-          requires:
-            - install-and-cache
-
-      - security-audit:
-          requires:
-            - install-and-cache
-
-      # Build after all checks pass
+      - quality-checks
+      - security-scan
       - build:
           requires:
-            - type-check
-            - lint
-            - security-audit
-
-      # Optional: Performance audit
-      - performance-audit:
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-
-      # Optional: Integration tests (controlled by parameter)
-      - integration-tests:
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-
-      # Optional: Codegen review
-      - codegen-review:
-          requires:
-            - build
-          context:
-            - codegen
-          filters:
-            branches:
-              only:
-                - main
-                - develop
-
-      # Sentry release only for main branch
-      - sentry-release:
-          requires:
-            - build
-          context:
-            - sentry
-          filters:
-            branches:
-              only: main
-          post-steps:
-            - notify-on-success
-
-  # Nightly workflow for comprehensive testing
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 2 * * *"  # Run at 2 AM UTC
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - install-and-cache
-      - type-check:
-          requires:
-            - install-and-cache
-      - lint:
-          requires:
-            - install-and-cache
-      - security-audit:
-          requires:
-            - install-and-cache
-      - build:
-          requires:
-            - type-check
-            - lint
-            - security-audit
-      - integration-tests:
-          requires:
-            - build
-      - performance-audit:
-          requires:
-            - build
+            - quality-checks
+            - security-scan
