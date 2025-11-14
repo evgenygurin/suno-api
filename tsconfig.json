@@ -24,6 +24,12 @@
       "playwright-core": ["./node_modules/rebrowser-playwright-core"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "trigger.config.ts"
+  ],
   "exclude": ["node_modules", "r2r-mcp-server"]
 }

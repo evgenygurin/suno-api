@@ -31,13 +31,15 @@ This document provides a high-level overview of all third-party integrations in 
           │                                               │
           └───────────────┬──────────────────────────────┘
                           │
-                    ┌─────▼──────┐
-                    │   Sentry   │
-                    │            │
-                    │ • Errors   │
-                    │ • Releases │
-                    │ • Perf     │
-                    └────────────┘
+                ┌─────────┴─────────┐
+                │                   │
+          ┌─────▼──────┐      ┌────▼────────┐
+          │   Sentry   │      │ Trigger.dev │
+          │            │      │             │
+          │ • Errors   │      │ • Tasks     │
+          │ • Releases │      │ • Queue     │
+          │ • Perf     │      │ • Schedule  │
+          └────────────┘      └─────────────┘
 ```
 
 ## 📊 Integration Matrix
@@ -50,6 +52,8 @@ This document provides a high-level overview of all third-party integrations in 
 | **Linear** | Issue Tracking | Issues, PRs | Slack | ✅ Active |
 | **Slack** | Team Communication | All events | - | ✅ Active |
 | **Sentry** | Error Monitoring | Releases, Errors | Slack | ✅ Active |
+| **Trigger.dev** | Background Tasks & Queue | API calls, Scheduled | Slack, Sentry | ✅ Active |
+| **Vercel AI SDK** | AI-Powered Features | API calls, Tasks | - | ✅ Active |
 | **Claude Code** | AI Development | On-demand | - | ✅ Active |
 | **Cursor** | IDE Integration | On-demand | - | ✅ Active |
 
@@ -163,6 +167,88 @@ This document provides a high-level overview of all third-party integrations in 
    └─► Linear issue linked to PR
 ```
 
+### Workflow 4: Background Task Processing with Trigger.dev
+
+```text
+1. API receives long-running request
+   ├─► Music generation requested
+   ├─► Batch processing needed
+   └─► Scheduled maintenance task
+
+2. API triggers background task
+   ├─► Task queued in Trigger.dev
+   ├─► Task ID returned to client (202 Accepted)
+   └─► Client can poll for status
+
+3. Trigger.dev executes task
+   ├─► Task runs in isolated environment
+   ├─► Automatic retry on transient failures
+   ├─► CAPTCHA solving with smart backoff
+   └─► Progress tracked in dashboard
+
+4. Task completes successfully
+   ├─► Result stored in database
+   ├─► Webhook notification sent
+   ├─► Sentry tracks execution time
+   └─► Slack notification (if configured)
+
+5. Task fails after retries
+   ├─► Error logged to Sentry
+   ├─► Alert sent to Slack #incidents
+   ├─► Task marked as failed in dashboard
+   └─► Manual intervention may be required
+
+6. Scheduled tasks (e.g., cookie refresh)
+   ├─► Cron triggers at configured interval
+   ├─► Trigger.dev runs maintenance task
+   ├─► Refreshes authentication cookies
+   ├─► Logs success/failure to Sentry
+   └─► Updates task history
+```
+
+### Workflow 5: AI-Enhanced Music Generation with Vercel AI SDK
+
+```text
+1. User submits music generation request
+   ├─► Prompt: "A dreamy electronic track with synths"
+   ├─► Preferences: genre, mood, instrumental
+   └─► Triggers AI-enhanced generation task
+
+2. AI analyzes and enhances prompt (OpenAI GPT-4o)
+   ├─► Adds specific genre details
+   ├─► Includes mood descriptors
+   ├─► Suggests instruments and tempo
+   ├─► Enhanced: "Ambient electronic with ethereal pads, soft synths..."
+   └─► Progress update: 30% (Prompt enhanced)
+
+3. AI extracts musical style metadata
+   ├─► Tool calling with structured output
+   ├─► Genre: "electronic", Mood: "dreamy"
+   ├─► Tempo: "medium", Instruments: ["synth", "pads", "drums"]
+   ├─► Tags: ["electronic", "dreamy", "medium", "synth", "ambient"]
+   └─► Progress update: 70% (Style analyzed)
+
+4. Trigger music generation with enhanced prompt
+   ├─► Calls Suno API with optimized prompt
+   ├─► Automatic CAPTCHA solving if needed
+   ├─► Real-time progress tracking
+   └─► Progress update: 90% (Generating music)
+
+5. Return enhanced results to user
+   ├─► Original prompt vs AI-enhanced prompt comparison
+   ├─► Musical style metadata and tags
+   ├─► Generated music files
+   ├─► Processing time and statistics
+   └─► Progress update: 100% (Complete)
+
+6. Frontend displays real-time progress
+   ├─► useRealtimeTaskTrigger React hook
+   ├─► Progress bar with stage updates
+   ├─► Enhanced prompt preview
+   ├─► Style analysis display
+   └─► Final results with playback
+```
+
 ## 📚 Integration Documentation
 
 ### Core Integrations
@@ -170,6 +256,7 @@ This document provides a high-level overview of all third-party integrations in 
 - **[Codegen Setup](./CODEGEN_SETUP.md)** - AI code review configuration
 - **[Linear Integration](./LINEAR_INTEGRATION.md)** - Issue tracking and project management
 - **[Slack Integration](./SLACK_INTEGRATION.md)** - Team notifications and collaboration
+- **[Trigger.dev Integration](./TRIGGER_DEV_INTEGRATION.md)** - Background tasks and queue management
 
 ### Supporting Documentation
 
@@ -218,6 +305,13 @@ This document provides a high-level overview of all third-party integrations in 
   - [ ] Configure Context7
   - [ ] Set up R2R Agent
 
+- [ ] **Trigger.dev**
+  - [ ] Create account at <https://trigger.dev>
+  - [ ] Create new project
+  - [ ] Get API Key and Project Ref
+  - [ ] Install MCP server with `npx trigger.dev@latest install-mcp`
+  - [ ] Configure task directories
+
 ### Per-Developer Setup
 
 - [ ] Clone repository
@@ -238,6 +332,7 @@ This document provides a high-level overview of all third-party integrations in 
 | `.sentryrc` | Sentry CLI config | Auth token, org, project |
 | `.sentryrc.example` | Sentry template | Setup instructions |
 | `.env.example` | Environment template | Required variables |
+| `trigger.config.ts` | Trigger.dev config | Task settings, retry logic, directories |
 | `CLAUDE.md` | Claude Code config | Project context |
 | `MCP-SETUP.md` | MCP server setup | Tool integrations |
 
@@ -253,6 +348,7 @@ CODEGEN_API_TOKEN     - Codegen API token
 ### CircleCI Contexts
 
 **Context: sentry**
+
 ```text
 SENTRY_AUTH_TOKEN     - Sentry authentication token
 SENTRY_ORG            - Sentry organization slug
@@ -260,12 +356,14 @@ SENTRY_PROJECT        - Sentry project slug
 ```
 
 **Context: codegen**
+
 ```text
 CODEGEN_ORG_ID        - Codegen organization ID
 CODEGEN_API_TOKEN     - Codegen API token
 ```
 
 **Context: slack**
+
 ```text
 SLACK_WEBHOOK_URL     - Slack incoming webhook URL
 ```
@@ -282,6 +380,10 @@ TWOCAPTCHA_API_KEY=xxx
 
 # Browser Configuration
 BROWSER_HEADLESS=true
+
+# Trigger.dev
+TRIGGER_API_KEY=tr_dev_xxx
+TRIGGER_PROJECT_REF=proj_xxx
 ```
 
 ## 🔍 Monitoring & Health
@@ -289,14 +391,18 @@ BROWSER_HEADLESS=true
 ### Integration Health Dashboard
 
 **Daily Checks:**
+
 - [ ] GitHub Actions running successfully
 - [ ] CircleCI builds passing
 - [ ] Codegen reviews completing
 - [ ] Linear sync working
 - [ ] Slack notifications arriving
 - [ ] Sentry tracking errors
+- [ ] Trigger.dev tasks executing
+- [ ] Background job queue healthy
 
 **Weekly Reviews:**
+
 - [ ] Review Codegen findings
 - [ ] Check Sentry error trends
 - [ ] Analyze Linear velocity
@@ -304,6 +410,7 @@ BROWSER_HEADLESS=true
 - [ ] Optimize Slack notifications
 
 **Monthly Audits:**
+
 - [ ] Review API usage and costs
 - [ ] Update integration configs
 - [ ] Rotate API tokens
@@ -315,55 +422,74 @@ BROWSER_HEADLESS=true
 ### Common Issues
 
 **1. GitHub Actions not triggering**
+
 - Check workflow file syntax
 - Verify repository permissions
 - Check branch protection rules
 
 **2. CircleCI build failures**
+
 - Review environment variables
 - Check context configuration
 - Verify Sentry auth token
 
 **3. Codegen review not appearing**
+
 - Verify GitHub secrets set
 - Check PR isn't draft or dependabot
 - Review workflow logs
 
 **4. Linear sync issues**
+
 - Verify GitHub integration active
 - Check branch naming convention
 - Review Linear integration logs
 
 **5. Slack notifications missing**
+
 - Verify webhook URLs current
 - Check channel permissions
 - Test webhook endpoints
 
 **6. Sentry errors not tracked**
+
 - Verify DSN configured
 - Check Sentry SDK initialized
 - Review error sampling rate
+
+**7. Trigger.dev tasks failing**
+
+- Check API key is valid and not expired
+- Verify project reference is correct
+- Review task timeout settings
+- Check retry configuration
+- Inspect task logs in Trigger.dev dashboard
+- Ensure task directories are properly configured
 
 ## 📊 Metrics & Analytics
 
 ### Key Performance Indicators
 
 **Development Velocity:**
+
 - Issues completed per week
 - PR merge time
 - Time in review
 
 **Code Quality:**
+
 - Codegen findings per PR
 - Test coverage percentage
 - Build success rate
 
 **Production Health:**
+
 - Error rate (Sentry)
 - Response time
 - Uptime percentage
 
 **Team Collaboration:**
+
 - Slack engagement
 - PR review turnaround
 - Issue resolution time
@@ -417,15 +543,16 @@ BROWSER_HEADLESS=true
 
 | Integration | Documentation | Support |
 | ----------- | ------------- | ------- |
-| **Codegen** | https://docs.codegen.com | support@codegen.com |
-| **Linear** | https://linear.app/docs | support@linear.app |
-| **CircleCI** | https://circleci.com/docs | support@circleci.com |
-| **Sentry** | https://docs.sentry.io | support@sentry.io |
-| **GitHub** | https://docs.github.com | support@github.com |
-| **Slack** | https://api.slack.com/docs | developers@slack.com |
+| **Codegen** | <https://docs.codegen.com> | <support@codegen.com> |
+| **Linear** | <https://linear.app/docs> | <support@linear.app> |
+| **CircleCI** | <https://circleci.com/docs> | <support@circleci.com> |
+| **Sentry** | <https://docs.sentry.io> | <support@sentry.io> |
+| **GitHub** | <https://docs.github.com> | <support@github.com> |
+| **Slack** | <https://api.slack.com/docs> | <developers@slack.com> |
+| **Trigger.dev** | <https://trigger.dev/docs> | <help@trigger.dev> |
 
 ---
 
-**Last Updated:** 2025-01-14
+**Last Updated:** 2025-01-15
 **Maintainer:** DevOps Team
 **Questions?** Open an issue or ask in #suno-api-dev
