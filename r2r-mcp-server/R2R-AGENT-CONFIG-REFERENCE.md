@@ -7,12 +7,14 @@
 ### SciPhi Cloud (Default/Free Tier)
 
 **Ресурсы:**
+
 - **Documents**: 100/user
 - **Chunks**: 10,000/user
 - **Collections**: 5/user
 - **Rate Limit**: 60 req/min global
 
 **File Upload Limits:**
+
 - txt/md: 2MB
 - csv/images: 5MB
 - doc/xlsx: 10MB
@@ -20,6 +22,7 @@
 - pdf: 30MB
 
 **Per-Route Limits:**
+
 - `/v3/retrieval/search`: 10/min, 3,000/month
 - `/v3/retrieval/rag`: 5/min, 200/month
 - `/v3/retrieval/agentic-rag`: 5/min, 100/month
@@ -56,7 +59,7 @@ default_max_upload_size = 10_000_000  # 10MB
 | `"advanced"` | Hybrid (pre-tuned) | Production default |
 | `"custom"` | Full control | Fine-tuning |
 
-### Core Parameters
+### Search Parameters
 
 ```python
 search_settings = {
@@ -99,11 +102,13 @@ search_settings = {
 ### Hybrid Search Best Practices
 
 **Recommended Ratios:**
+
 - **Conceptual queries**: `semantic_weight: 5.0`, `full_text_weight: 1.0` (default)
 - **Exact match focus**: `semantic_weight: 1.0`, `full_text_weight: 5.0`
 - **Balanced**: `semantic_weight: 3.0`, `full_text_weight: 2.0`
 
 **Performance:**
+
 - `full_text_limit: 200` - balance speed/recall
 - `rrf_k: 50` - default, increase (60-100) for more diversity
 - `limit: 10` - standard, increase for broader context
@@ -112,7 +117,7 @@ search_settings = {
 
 ## 🤖 **Generation Config** (`rag_generation_config`)
 
-### Core Parameters
+### Generation Parameters
 
 ```python
 rag_generation_config = {
@@ -144,6 +149,7 @@ rag_generation_config = {
 ### Performance Optimization
 
 **Fast Response (time-critical):**
+
 ```python
 {
     "model": "anthropic/claude-3-haiku-20240307",
@@ -154,6 +160,7 @@ rag_generation_config = {
 ```
 
 **High Quality (accuracy-critical):**
+
 ```python
 {
     "model": "anthropic/claude-3-opus-20240229",
@@ -166,6 +173,7 @@ rag_generation_config = {
 ```
 
 **Balanced (production):**
+
 ```python
 {
     "model": "anthropic/claude-3-7-sonnet-20250219",
@@ -193,6 +201,7 @@ rag_tools = [
 ```
 
 **Use for:**
+
 - Q&A from documents
 - Summarization tasks
 - Fact-finding queries
@@ -210,6 +219,7 @@ research_tools = [
 ```
 
 **Use for:**
+
 - Complex reasoning problems
 - Mathematical computations
 - Multi-step analysis
@@ -358,6 +368,7 @@ follow_up = client.retrieval.agent(
 ```
 
 **When to enable:**
+
 - Long documents with cross-references
 - Need more context around chunks
 - Trading off: increased storage/processing time
@@ -461,6 +472,7 @@ for event in response:
 ### 1. Trigger.dev Integration
 
 ❌ **NEVER wrap in Promise.all/allSettled:**
+
 ```python
 # WRONG
 await Promise.all([
@@ -470,6 +482,7 @@ await Promise.all([
 ```
 
 ✅ **Sequential execution:**
+
 ```python
 result1 = await task.triggerAndWait({...})
 result2 = await task.triggerAndWait({...})
@@ -478,12 +491,14 @@ result2 = await task.triggerAndWait({...})
 ### 2. Result Object Handling
 
 ❌ **Direct access to output:**
+
 ```python
 output = await task.triggerAndWait({...})
 print(output.data)  # WRONG
 ```
 
 ✅ **Check result.ok first:**
+
 ```python
 result = await task.triggerAndWait({...})
 if result.ok:
@@ -500,11 +515,13 @@ else:
 ### 4. Rate Limit Strategy
 
 **Cloud deployment:**
+
 - Global 60 req/min applies to ALL users from same IP
 - Per-route limits are MORE restrictive
 - Use batch operations where possible
 
 **Local deployment:**
+
 - Configure limits in `r2r.toml`
 - No IP-based throttling
 
