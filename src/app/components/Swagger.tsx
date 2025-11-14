@@ -12,7 +12,6 @@ function Swagger({ spec }: Props) {
   return <SwaggerUI spec={spec} requestInterceptor={(req) => {
     // Remove cookies before sending requests
     req.credentials = 'omit';
-    console.log(req);
     return req;
   }} />;
 }

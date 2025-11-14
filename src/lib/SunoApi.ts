@@ -1,7 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import pino from 'pino';
-
-const logger = pino();
+import logger from './logger';
 
 // Default model for music generation
 export const DEFAULT_MODEL = 'V3_5';
@@ -174,7 +172,7 @@ class SunoApi {
         model: this.mapModelName(model),
       };
 
-      logger.info('Generating music with payload:', payload);
+      logger.info({ payload }, 'Generating music with payload');
 
       const response = await this.client.post<TaskResponse>('/generate', payload);
 
@@ -196,7 +194,7 @@ class SunoApi {
         } as AudioInfo];
       }
     } catch (error: any) {
-      logger.error('Error generating music:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error generating music');
       throw error;
     }
   }
@@ -231,7 +229,7 @@ class SunoApi {
         payload.negativeTags = negative_tags;
       }
 
-      logger.info('Generating custom music with payload:', payload);
+      logger.info({ payload }, 'Generating custom music with payload');
 
       const response = await this.client.post<TaskResponse>('/generate', payload);
 
@@ -255,7 +253,7 @@ class SunoApi {
         } as AudioInfo];
       }
     } catch (error: any) {
-      logger.error('Error generating custom music:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error generating custom music');
       throw error;
     }
   }
@@ -293,7 +291,7 @@ class SunoApi {
 
       return results;
     } catch (error: any) {
-      logger.error('Error getting audio info:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error getting audio info');
       throw error;
     }
   }
@@ -313,7 +311,7 @@ class SunoApi {
         credits_left: response.data.data,
       };
     } catch (error: any) {
-      logger.error('Error getting credits:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error getting credits');
       throw error;
     }
   }
@@ -354,7 +352,7 @@ class SunoApi {
 
       throw new Error('Lyrics generation timeout');
     } catch (error: any) {
-      logger.error('Error generating lyrics:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error generating lyrics');
       throw error;
     }
   }
@@ -377,7 +375,7 @@ class SunoApi {
       // It uses upload-and-extend endpoint
       throw new Error('Audio extension requires uploading the audio file. Use upload-and-extend endpoint instead.');
     } catch (error: any) {
-      logger.error('Error extending audio:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error extending audio');
       throw error;
     }
   }
@@ -421,7 +419,7 @@ class SunoApi {
         model_name: '',
       } as AudioInfo];
     } catch (error: any) {
-      logger.error('Error generating stems:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error generating stems');
       throw error;
     }
   }
@@ -440,7 +438,7 @@ class SunoApi {
 
       return response.data.data;
     } catch (error: any) {
-      logger.error('Error getting lyric alignment:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error getting lyric alignment');
       throw error;
     }
   }
@@ -460,7 +458,7 @@ export const sunoApi = async (apiKey?: string): Promise<SunoApi> => {
   const resolvedApiKey = apiKey || process.env.SUNO_API_KEY;
   
   if (!resolvedApiKey) {
-    logger.error('No API key provided! Please provide SUNO_API_KEY in environment variables or pass it as parameter.');
+    logger.error({}, 'No API key provided! Please provide SUNO_API_KEY in environment variables or pass it as parameter.');
     throw new Error('Please provide SUNO_API_KEY in environment variables or pass it as parameter.');
   }
 
