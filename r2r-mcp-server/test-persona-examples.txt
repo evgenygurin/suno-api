@@ -1,0 +1,30 @@
+Примеры автоматического распознавания персоны:
+
+1. "What is the architecture of this project?"
+   Ключевые слова: "architecture" (+3)
+   Баллы: developer=0, architect=3, debugger=0, learner=2, tester=0
+   Выбрана: architect ✓
+
+2. "Fix timeout error in authentication"
+   Ключевые слова: "fix" (+2), "timeout" (+2), "error" (+3)
+   Баллы: developer=0, architect=0, debugger=7, learner=0, tester=0
+   Выбрана: debugger ✓
+
+3. "Show me test coverage for API endpoints"
+   Ключевые слова: "test" (+4), "coverage" (+4), "api" (+3)
+   Баллы: developer=3, architect=0, debugger=0, learner=2, tester=4
+   Выбрана: tester ✓ (выше, чем developer!)
+
+4. "Explain how RAG works"
+   Ключевые слова: "explain" (+2), "how" (+2)
+   Баллы: developer=0, architect=0, debugger=0, learner=2, tester=0
+   Выбрана: learner ✓
+
+5. "How to implement JWT authentication in API?"
+   Ключевые слова: "how to" (+2), "implement" (+3), "api" (+3)
+   Баллы: developer=5, architect=0, debugger=0, learner=2, tester=0
+   Выбрана: developer ✓
+
+6. При равных баллах используется приоритет:
+   architect > debugger > tester > learner > developer
+   (более специализированная персона в приоритете)

@@ -4,11 +4,25 @@ Get started with the Suno AI music generation MCP server in 5 minutes!
 
 ## 🚀 Quick Setup
 
+### Prerequisites
+
+Before starting, ensure you have:
+- **Node.js v18 or higher** installed
+- A **Suno API key** from [sunoapi.org](https://sunoapi.org/api-key)
+
+Check your Node.js version:
+
+```bash
+node --version  # Should output v18.0.0 or higher
+```
+
 ### 1. Install Dependencies
 ```bash
 cd suno-fastmcp-server
 npm install
 ```
+
+> **Note**: This creates `package-lock.json` for reproducible builds. This file is committed to ensure consistent dependency versions across all environments.
 
 ### 2. Configure Environment
 ```bash
@@ -21,7 +35,7 @@ nano .env  # or use your favorite editor
 ```
 
 Your `.env` should look like:
-```
+```text
 SUNO_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 LOG_LEVEL=info
 ```
@@ -105,13 +119,13 @@ Completely quit and restart Claude Desktop for the MCP server to load.
 
 In Claude Desktop, try asking:
 
-```
+```text
 Generate an upbeat pop song about summer
 ```
 
 or
 
-```
+```text
 List available Suno AI models
 ```
 
@@ -121,7 +135,7 @@ You should see Claude using the Suno tools!
 
 Try this prompt in Claude:
 
-```
+```text
 Generate a custom song with these details:
 - Style: electronic, synthwave, 80s
 - Title: "Neon Nights"
@@ -135,7 +149,7 @@ Claude will use the `generate_custom_music` tool and return a task ID.
 
 After generating music, check the status:
 
-```
+```text
 Check the status of task ID: [paste the task ID from previous generation]
 ```
 
@@ -144,27 +158,27 @@ Claude will use `get_audio_info` to check if your music is ready.
 ## 💡 Common Use Cases
 
 ### Generate Quick Music
-```
+```bash
 Generate instrumental electronic music for a video background
 ```
 
 ### Create Custom Song
-```
+```sql
 Create a jazz song called "Midnight Blues" with saxophone and slow tempo
 ```
 
 ### Generate Lyrics First
-```
+```bash
 Generate lyrics for a motivational rock song about overcoming challenges
 ```
 
 Then use those lyrics:
-```
+```bash
 Now create music for those lyrics with style: rock, electric guitar, powerful vocals
 ```
 
 ### Separate Vocals
-```
+```text
 Separate the vocals and instruments from task ID: [task_id]
 ```
 
