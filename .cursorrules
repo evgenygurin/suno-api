@@ -92,6 +92,20 @@
 - Optimize re-renders with memo/useMemo/useCallback
 - Follow Next.js best practices for routing and data fetching
 - Use Server Components when possible
+- **IMPORTANT**: Use App Router (NOT Pages Router)
+- API routes should be in `src/app/api/` using route handlers
+
+### Playwright Browser Automation (Suno API Specific)
+- Use rebrowser-playwright-core for anti-detection
+- Support both Chromium and Firefox browsers
+- Always implement proper timeouts and waits
+- Handle hCaptcha solving via 2Captcha service
+- Implement retry logic with exponential backoff
+- Log all browser automation events for debugging
+- Clean up browser contexts properly
+- Use ghost-cursor for human-like interactions (optional)
+- Test browser automation thoroughly
+- Consider macOS for fewer CAPTCHAs in production
 
 ### API Development
 - Follow RESTful conventions
@@ -117,6 +131,11 @@
 - Keep dependencies updated
 - Follow OWASP guidelines
 - Regular security audits
+- **CRITICAL**: Never log or commit SUNO_COOKIE or TWOCAPTCHA_KEY
+- **CRITICAL**: Never commit `.env` file
+- Validate all environment variables on startup
+- Implement rate limiting to prevent abuse
+- Monitor 2Captcha costs and usage
 
 ### Testing
 - Write tests for new features
@@ -276,14 +295,57 @@ Closes LIN-123
 5. Notify affected users if needed
 6. Document incident
 
+## Project-Specific Information (Suno API)
+
+### Key Environment Variables
+- `SUNO_COOKIE` - Suno.ai authentication cookie (REQUIRED)
+- `TWOCAPTCHA_KEY` - 2Captcha API key for solving hCaptcha (REQUIRED)
+- `BROWSER` - Browser to use: `chromium` or `firefox`
+- `BROWSER_GHOST_CURSOR` - Enable ghost-cursor for human-like mouse movements
+- `BROWSER_LOCALE` - Browser language (recommend `en` or `ru`)
+- `BROWSER_HEADLESS` - Run browser in headless mode (true/false)
+
+### API Endpoints
+Main endpoints to know:
+- `/api/generate` - Generate music from prompt
+- `/api/custom_generate` - Custom music generation (lyrics, style, title)
+- `/api/get_limit` - Get account quota (use for testing)
+- `/api/get` - Get music info by ID(s)
+- `/v1/chat/completions` - OpenAI-compatible endpoint
+
+### Common Gotchas
+- Browser automation is SLOW (5-30 seconds)
+- CAPTCHAs are unpredictable and cost money
+- Cookies expire and need refresh
+- Suno.ai can change UI anytime (breaking changes possible)
+- GPU acceleration doesn't work in Docker
+- macOS gets significantly fewer CAPTCHAs than Linux/Windows
+
+### Logging (Pino)
+- Use structured logging: `logger.info({ context }, 'message')`
+- NEVER use `console.log()`
+- Log levels: error, warn, info, debug
+- Always include context (endpoint, userId, duration)
+
+### Testing Checklist
+- [ ] Test API endpoint with curl/Postman
+- [ ] Verify CAPTCHA solving works
+- [ ] Test with both valid and invalid cookies
+- [ ] Check error handling and edge cases
+- [ ] Verify quota limits work correctly
+- [ ] Test TypeScript build: `npm run build`
+
 ## Resources
 
-- Team documentation: [link]
-- Architecture diagrams: [link]
-- API documentation: [link]
-- Design system: [link]
-- Deployment guide: [link]
+- **API Documentation**: https://suno.gcui.ai/docs
+- **Demo Site**: https://suno.gcui.ai
+- **GitHub Issues**: https://github.com/gcui-art/suno-api/issues
+- **2Captcha API Docs**: https://2captcha.com/2captcha-api
+- **Playwright Docs**: https://playwright.dev
+- **Next.js App Router**: https://nextjs.org/docs/app
 
 ---
 
 Remember: Quality over speed. Write code you'd be proud to review.
+
+**For Suno API**: Always test browser automation carefully. CAPTCHAs are expensive!
