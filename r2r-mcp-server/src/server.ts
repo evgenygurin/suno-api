@@ -13,7 +13,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { config } from 'dotenv';
 import logger, { createModuleLogger } from './logger.js';
-import { getR2RClient } from './r2r-client.js';
+import { getR2RClient } from './r2r-client-sdk.js';
 
 // Import tools
 import { searchDocumentation, searchCodeExamples, findTestExamples } from './tools/search.js';
@@ -36,8 +36,19 @@ import {
   findTestCoverage,
   exploreArchitectureGraph,
 } from './tools/graph.js';
+import { R2RAgent, type AgentConfig } from './agent/index.js';
 
 const serverLogger = createModuleLogger('mcp-server');
+
+// Agent instance
+let agentInstance: R2RAgent | null = null;
+
+function getAgent(config?: Partial<AgentConfig>): R2RAgent {
+  if (!agentInstance || config) {
+    agentInstance = new R2RAgent(config);
+  }
+  return agentInstance;
+}
 
 // Load environment variables
 config();
@@ -417,6 +428,51 @@ const TOOLS: Tool[] = [
       },
     },
   },
+
+  // Agent tool
+  {
+    name: 'r2r_agent',
+    description: 'Intelligent R2R agent that autonomously orchestrates RAG, GraphRAG, search, and memory tools. The agent analyzes your request, auto-selects optimal persona (developer/architect/debugger/learner/tester) if not specified, decides which tools to use, executes them in optimal order, and synthesizes a comprehensive answer.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        request: {
+          type: 'string',
+          description: 'Your request or question (natural language)',
+        },
+        persona: {
+          type: 'string',
+          enum: ['developer', 'architect', 'debugger', 'learner', 'tester'],
+          description: 'Agent persona (optional - auto-selected based on request keywords if not provided)',
+        },
+        mode: {
+          type: 'string',
+          enum: ['interactive', 'autonomous', 'advisory'],
+          description: 'Agent mode (default: interactive)',
+          default: 'interactive',
+        },
+      },
+      required: ['request'],
+    },
+  },
+
+  {
+    name: 'agent_status',
+    description: 'Get current agent status, configuration, and statistics',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+
+  {
+    name: 'agent_reset',
+    description: 'Reset agent context and state',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
 ];
 
 /**
@@ -466,6 +522,43 @@ async function executeTool(name: string, args: unknown): Promise<unknown> {
         return await findTestCoverage(args as Parameters<typeof findTestCoverage>[0]);
       case 'explore_architecture_graph':
         return await exploreArchitectureGraph(args as Parameters<typeof exploreArchitectureGraph>[0]);
+
+      // Agent tools
+      case 'r2r_agent': {
+        const params = args as { request: string; persona?: string; mode?: string };
+        const autoSelect = !params.persona;
+        const agent = getAgent({
+          persona: params.persona || 'developer',
+          mode: (params.mode as any) || 'interactive',
+        });
+        const response = await agent.process(params.request, autoSelect);
+        return {
+          success: true,
+          data: response,
+          metadata: {
+            ...response.metadata,
+            auto_selected_persona: autoSelect,
+          },
+        };
+      }
+
+      case 'agent_status': {
+        const agent = getAgent();
+        const status = agent.getStatus();
+        return {
+          success: true,
+          data: status,
+        };
+      }
+
+      case 'agent_reset': {
+        const agent = getAgent();
+        agent.reset();
+        return {
+          success: true,
+          data: { message: 'Agent reset successfully' },
+        };
+      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);

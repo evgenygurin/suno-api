@@ -3,7 +3,7 @@
  * Stores and retrieves development experiences for learning
  */
 
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { createModuleLogger } from '../logger.js';
 import {
   StoreExperienceRequestSchema,
@@ -14,8 +14,6 @@ import {
 } from '../types.js';
 
 const logger = createModuleLogger('tools:memory');
-
-const EXPERIENCE_COLLECTION = 'suno-api-experiences';
 
 /**
  * Store a development experience for future reference
@@ -63,11 +61,11 @@ ${validatedParams.tags ? `**Tags:** ${validatedParams.tags.join(', ')}` : ''}
     `.trim();
 
     const client = getR2RClient();
-    
-    // Ingest as document
+
+    // Ingest as document with raw_text
     const response = await client.ingestDocument({
       document_id: id,
-      content,
+      raw_text: content,
       metadata: {
         file_path: `experiences/${id}.md`,
         file_type: 'markdown',
@@ -102,10 +100,16 @@ ${validatedParams.tags ? `**Tags:** ${validatedParams.tags.join(', ')}` : ''}
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Store experience error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Store experience error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }
@@ -180,10 +184,16 @@ export async function retrieveSimilarExperiences(params: {
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Retrieve experiences error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Retrieve experiences error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }
@@ -229,7 +239,7 @@ export async function reflectOnPatterns(params: {
       .map(s => s.metadata.experience_metadata)
       .filter((exp): exp is Experience => exp?.outcome === 'success');
 
-    const patterns = Array.from(
+    const patterns: string[] = Array.from(
       new Set(
         successfulExperiences
           .map(exp => exp.learned_pattern)
@@ -254,10 +264,16 @@ export async function reflectOnPatterns(params: {
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Pattern reflection error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Pattern reflection error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }
@@ -324,10 +340,16 @@ export async function getMemoryStats(): Promise<
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Memory stats error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Memory stats error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }

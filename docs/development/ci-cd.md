@@ -156,24 +156,27 @@ parameters:
 - Upload build artifacts (retained for 7 days)
 
 #### codegen-review
-- **Conditional**: Only runs on PRs, skipped for dependabot and when `skip-review` label is present
+- **Conditional**: Only runs on PRs, skipped for dependabot, drafts, and PRs with `skip-review` label
 - AI-powered code review using Codegen.com
 - Reviews focus on:
   - TypeScript/Next.js best practices
-  - Browser automation security
-  - CAPTCHA integration
+  - Browser automation security (Playwright)
+  - CAPTCHA integration (2Captcha)
   - Performance & security
-  - Documentation
+  - Logging patterns (Pino)
+  - Documentation quality
 
-**Setup:**
-1. Add GitHub secrets:
-   ```text
-   CODEGEN_ORG_ID=<your-org-id>
-   CODEGEN_API_TOKEN=<your-api-token>
-   ```
+**Quick Setup:**
+1. Install [Codegen GitHub App](https://github.com/apps/codegen-app)
+2. Get credentials from [Codegen Dashboard](https://app.codegen.com)
+3. Add GitHub secrets: `CODEGEN_ORG_ID` and `CODEGEN_API_TOKEN`
 
-2. Codegen will automatically review PRs
-3. To skip review, add `skip-review` label to PR
+**📚 Full Documentation:** See [docs/CODEGEN_SETUP.md](./docs/CODEGEN_SETUP.md) for:
+- Complete installation guide
+- Integration configuration
+- Custom review prompts
+- Linear/Slack integration
+- Troubleshooting
 
 ### 2. Security Scanning (`.github/workflows/security.yml`)
 

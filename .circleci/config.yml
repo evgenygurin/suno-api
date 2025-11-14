@@ -160,29 +160,93 @@ jobs:
             curl -sL https://sentry.io/get-cli/ | bash
             sentry-cli --version
       - run:
+          name: Verify Sentry Configuration
+          command: |
+            # Verify .sentryrc exists or environment variables are set
+            if [ ! -f ".sentryrc" ] && [ -z "$SENTRY_AUTH_TOKEN" ]; then
+              echo "❌ Error: Sentry not configured"
+              echo "Either .sentryrc file or SENTRY_AUTH_TOKEN environment variable required"
+              exit 1
+            fi
+
+            if [ -f ".sentryrc" ]; then
+              echo "✅ Using .sentryrc configuration"
+            else
+              echo "✅ Using environment variables"
+            fi
+
+            # Verify we have the required variables
+            if [ -z "$SENTRY_ORG" ] || [ -z "$SENTRY_PROJECT" ]; then
+              echo "❌ Error: SENTRY_ORG and SENTRY_PROJECT must be set"
+              exit 1
+            fi
+      - run:
           name: Create Sentry Release
           command: |
-            export SENTRY_RELEASE="${CIRCLE_SHA1:0:7}"
-            echo "📦 Creating Sentry release: ${SENTRY_RELEASE}"
-            sentry-cli releases new "${SENTRY_RELEASE}"
-            sentry-cli releases set-commits "${SENTRY_RELEASE}" --auto
-
-            # Upload source maps for better error tracking
-            if [ -d ".next" ]; then
-              echo "📤 Uploading source maps..."
-              sentry-cli releases files "${SENTRY_RELEASE}" upload-sourcemaps .next/static || true
+            # Use git tag if available, otherwise use short commit SHA
+            if [ -n "$CIRCLE_TAG" ]; then
+              export SENTRY_RELEASE="$CIRCLE_TAG"
+            else
+              export SENTRY_RELEASE="${CIRCLE_SHA1:0:7}"
             fi
 
+            echo "📦 Creating Sentry release: ${SENTRY_RELEASE}"
+            echo "   Organization: ${SENTRY_ORG}"
+            echo "   Project: ${SENTRY_PROJECT}"
+
+            # Create new release
+            sentry-cli releases new "${SENTRY_RELEASE}" \
+              --project "${SENTRY_PROJECT}"
+
+            # Associate commits with release
+            echo "🔗 Linking commits to release..."
+            sentry-cli releases set-commits "${SENTRY_RELEASE}" --auto \
+              || echo "⚠️ Could not link commits (non-fatal)"
+      - run:
+          name: Upload Source Maps to Sentry
+          command: |
+            export SENTRY_RELEASE="${CIRCLE_TAG:-${CIRCLE_SHA1:0:7}}"
+
+            if [ -d ".next" ]; then
+              echo "📤 Uploading source maps for better error tracking..."
+
+              # Upload source maps from .next/static
+              sentry-cli releases files "${SENTRY_RELEASE}" \
+                upload-sourcemaps .next/static \
+                --url-prefix "~/_next/static" \
+                --rewrite \
+                || echo "⚠️ Source map upload failed (non-fatal)"
+
+              echo "✅ Source maps uploaded successfully"
+            else
+              echo "⚠️ .next directory not found, skipping source maps"
+            fi
+      - run:
+          name: Finalize Sentry Release
+          command: |
+            export SENTRY_RELEASE="${CIRCLE_TAG:-${CIRCLE_SHA1:0:7}}"
+
+            # Finalize the release
+            echo "🏁 Finalizing release..."
             sentry-cli releases finalize "${SENTRY_RELEASE}"
 
-            # Create deployment marker
-            export DEPLOY_ENV="${CIRCLE_BRANCH}"
+            # Determine deployment environment
+            export DEPLOY_ENV="staging"
             if [ "${CIRCLE_BRANCH}" = "main" ]; then
               DEPLOY_ENV="production"
+            elif [ -n "$CIRCLE_TAG" ]; then
+              DEPLOY_ENV="production"
             fi
-            sentry-cli releases deploys "${SENTRY_RELEASE}" new -e "${DEPLOY_ENV}"
 
-            echo "✅ Sentry release created successfully"
+            # Create deployment marker
+            echo "🚀 Creating deployment marker for ${DEPLOY_ENV}..."
+            sentry-cli releases deploys "${SENTRY_RELEASE}" new \
+              --env "${DEPLOY_ENV}" \
+              --name "CircleCI Deployment #${CIRCLE_BUILD_NUM}" \
+              --url "${CIRCLE_BUILD_URL}"
+
+            echo "✅ Sentry release ${SENTRY_RELEASE} created and deployed to ${DEPLOY_ENV}"
+            echo "🔗 View in Sentry: https://sentry.io/organizations/${SENTRY_ORG}/releases/${SENTRY_RELEASE}/"
       - notify-on-failure
 
   codegen-review:

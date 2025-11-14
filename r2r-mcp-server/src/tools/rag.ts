@@ -2,7 +2,7 @@
  * MCP Tools for RAG (Retrieval-Augmented Generation)
  */
 
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import { createModuleLogger } from '../logger.js';
 import { RAGRequestSchema, type ToolResult, type RAGResponse } from '../types.js';
 
@@ -43,10 +43,10 @@ export async function askDocumentation(params: {
       };
     }
 
-    logger.info({ 
-      answerLength: response.data?.answer.length || 0,
-      sourcesCount: response.data?.sources.length || 0,
-      executionTime: Date.now() - startTime 
+    logger.info({
+      answerLength: response.data?.answer?.length || 0,
+      sourcesCount: response.data?.sources?.length || 0,
+      executionTime: Date.now() - startTime
     }, 'RAG query completed');
 
     return {
@@ -58,10 +58,16 @@ export async function askDocumentation(params: {
       },
     };
   } catch (error) {
-    logger.error({ error }, 'RAG query error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'RAG query error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: {
         execution_time_ms: Date.now() - startTime,
       },
@@ -126,10 +132,16 @@ export async function getImplementationHelp(params: {
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Implementation help error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Implementation help error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }
@@ -181,10 +193,16 @@ Find similar issues, solutions, and relevant documentation.
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Debug RAG error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Debug RAG error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }
@@ -233,10 +251,16 @@ export async function explainArchitecture(params: {
       },
     };
   } catch (error) {
-    logger.error({ error }, 'Architecture explanation error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({
+      error: errorMessage,
+      stack: errorStack,
+      errorType: error?.constructor?.name
+    }, 'Architecture explanation error');
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       metadata: { execution_time_ms: Date.now() - startTime },
     };
   }

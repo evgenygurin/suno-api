@@ -4,7 +4,7 @@
  */
 
 import { createModuleLogger } from '../logger.js';
-import { getR2RClient } from '../r2r-client.js';
+import { getR2RClient } from '../r2r-client-sdk.js';
 import type { IngestionRequest, Entity, Relationship } from '../types.js';
 
 const logger = createModuleLogger('graph-builder');

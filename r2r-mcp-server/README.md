@@ -5,31 +5,62 @@
 ## 🎯 Возможности
 
 ### RAG (Retrieval-Augmented Generation)
+
 - **Семантический поиск** по документации проекта
 - **Hybrid search** (векторный + ключевые слова)
 - **Контекстные ответы** на вопросы о проекте
 - **Помощь в имплементации** фич с примерами и паттернами
 
 ### GraphRAG
+
 - **Граф знаний** о структуре кода
 - **Анализ зависимостей** между модулями
 - **Поиск использований** (где используется модуль/функция)
 - **Test coverage mapping** (какие тесты покрывают код)
 
 ### Experience Memory
+
 - **Накопление опыта** решений и паттернов
 - **Поиск похожих ситуаций** из прошлого
 - **Автоматическая рефлексия** для выявления patterns
 - **Статистика** успешных/неуспешных подходов
 
 ### MCP Integration
+
 - **Прямая интеграция с Claude** через MCP protocol
 - **16 специализированных инструментов** для разработки
 - **Real-time** доступ к документации и истории
 
+### 🤖 Intelligent Agent System (NEW!)
+
+- **Автономная оркестрация инструментов** - агент сам выбирает нужные инструменты
+- **5 специализированных персон** - developer, architect, debugger, learner, tester
+- **3 режима работы** - interactive, autonomous, advisory
+- **Pattern-based decision making** - умное распознавание типа запроса
+- **Experience accumulation** - обучение на основе успешных/неуспешных попыток
+- **Auto-reflection** - автоматический анализ паттернов
+
+**Подробнее**: См. [R2R-AGENT-SUMMARY.md](./R2R-AGENT-SUMMARY.md)
+
+**Быстрый старт агента**:
+```bash
+# Спросить агента (режим developer)
+npm run agent -- ask "How does authentication work?"
+
+# Использовать специализированную персону
+npm run agent -- ask "Explain the project architecture" --persona architect
+
+# Интерактивный режим
+npm run agent -- interactive --persona developer
+
+# Список всех персон и режимов
+npm run agent -- personas
+npm run agent -- modes
+```
+
 ## 🏗️ Архитектура
 
-```
+```text
 ┌─────────────────┐
 │  Claude (User)  │
 └────────┬────────┘
@@ -109,6 +140,7 @@ npm run cli ingest -- \
 ```
 
 Это проиндексирует:
+
 - `README.md`, `CLAUDE.md` (правила проекта)
 - Все `*.ts`, `*.tsx` файлы в `src/`
 - Тесты в `tests/`
@@ -183,6 +215,7 @@ npm start
 #### 🔍 Search Tools
 
 **`search_documentation`** - Поиск по документации
+
 ```typescript
 {
   query: "playwright browser automation",
@@ -194,6 +227,7 @@ npm start
 ```
 
 **`search_code_examples`** - Поиск примеров кода
+
 ```typescript
 {
   description: "how to solve CAPTCHA with 2captcha",
@@ -203,6 +237,7 @@ npm start
 ```
 
 **`find_test_examples`** - Поиск тестов
+
 ```typescript
 {
   feature: "API endpoint testing",
@@ -213,6 +248,7 @@ npm start
 #### 🤖 RAG Tools
 
 **`ask_documentation`** - Вопросы о проекте
+
 ```typescript
 {
   question: "How does CAPTCHA solving work in this project?",
@@ -222,6 +258,7 @@ npm start
 ```
 
 **`get_implementation_help`** - Помощь с имплементацией
+
 ```typescript
 {
   feature_description: "Add new API endpoint for user settings",
@@ -233,6 +270,7 @@ npm start
 ```
 
 **`debug_with_rag`** - Помощь с дебагом
+
 ```typescript
 {
   error_message: "TypeError: Cannot read property 'click' of null",
@@ -242,6 +280,7 @@ npm start
 ```
 
 **`explain_architecture`** - Объяснение архитектуры
+
 ```typescript
 {
   aspect: "authentication flow" // or "API structure", "database design"
@@ -251,6 +290,7 @@ npm start
 #### 🧠 Memory Tools
 
 **`store_experience`** - Сохранить опыт
+
 ```typescript
 {
   context: {
@@ -267,6 +307,7 @@ npm start
 ```
 
 **`retrieve_similar_experiences`** - Найти похожий опыт
+
 ```typescript
 {
   current_context: "Getting timeout errors when solving CAPTCHA",
@@ -276,6 +317,7 @@ npm start
 ```
 
 **`reflect_on_patterns`** - Анализ паттернов
+
 ```typescript
 {
   area: "error handling", // or "testing", "API design"
@@ -284,6 +326,7 @@ npm start
 ```
 
 **`get_memory_stats`** - Статистика памяти
+
 ```typescript
 {} // No parameters
 ```
@@ -291,6 +334,7 @@ npm start
 #### 🕸️ Graph Tools
 
 **`query_code_relationships`** - Связи в графе
+
 ```typescript
 {
   entity_name: "src/lib/captcha.ts",
@@ -301,6 +345,7 @@ npm start
 ```
 
 **`find_dependencies`** - Зависимости модуля
+
 ```typescript
 {
   module_path: "src/app/api/generate/route.ts",
@@ -309,6 +354,7 @@ npm start
 ```
 
 **`find_usages`** - Где используется
+
 ```typescript
 {
   module_path: "src/lib/logger.ts",
@@ -317,6 +363,7 @@ npm start
 ```
 
 **`find_test_coverage`** - Покрытие тестами
+
 ```typescript
 {
   module_path: "src/app/api/generate/route.ts"
@@ -324,6 +371,7 @@ npm start
 ```
 
 **`explore_architecture_graph`** - Исследовать архитектуру
+
 ```typescript
 {
   root_module: "src/",

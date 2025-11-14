@@ -52,6 +52,14 @@
         "TAVILY_API_KEY": "${TAVILY_API_KEY}"
       },
       "description": "Web search and content extraction"
+    },
+    "trigger": {
+      "command": "npx",
+      "args": [
+        "trigger.dev@latest",
+        "mcp",
+        "--dev-only"
+      ]
     }
   },
   "inputs": [

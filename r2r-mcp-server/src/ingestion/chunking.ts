@@ -44,7 +44,6 @@ function chunkCode(content: string, chunkSize: number, chunkOverlap: number): st
   let currentChunk: string[] = [];
   let currentSize = 0;
   let inBlock = false;
-  let blockType: 'function' | 'class' | 'interface' | null = null;
   let braceCount = 0;
 
   for (let i = 0; i < lines.length; i++) {
@@ -59,14 +58,12 @@ function chunkCode(content: string, chunkSize: number, chunkOverlap: number): st
         trimmed.startsWith('export function ') ||
         trimmed.startsWith('export async function ')
       ) {
-        blockType = 'function';
         inBlock = true;
         braceCount = 0;
       } else if (
         trimmed.startsWith('class ') ||
         trimmed.startsWith('export class ')
       ) {
-        blockType = 'class';
         inBlock = true;
         braceCount = 0;
       } else if (
@@ -75,7 +72,6 @@ function chunkCode(content: string, chunkSize: number, chunkOverlap: number): st
         trimmed.startsWith('type ') ||
         trimmed.startsWith('export type ')
       ) {
-        blockType = 'interface';
         inBlock = true;
         braceCount = 0;
       }
@@ -88,7 +84,6 @@ function chunkCode(content: string, chunkSize: number, chunkOverlap: number): st
 
       if (braceCount === 0 && line.includes('}')) {
         inBlock = false;
-        blockType = null;
       }
     }
 
