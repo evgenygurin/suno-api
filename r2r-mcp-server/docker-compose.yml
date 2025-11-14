@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension for R2R
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: r2r-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-r2r}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - r2r-network
+
+  # R2R Server
+  r2r:
+    image: ragtoriches/prod:latest
+    container_name: r2r-server
+    environment:
+      # PostgreSQL connection
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DBNAME: ${POSTGRES_DB:-r2r}
+      
+      # OpenAI API (for embeddings)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      
+      # R2R Configuration
+      R2R_PROJECT_NAME: suno-api-docs
+      
+      # Optional: Use local embeddings instead of OpenAI
+      # EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      # EMBEDDING_PROVIDER: sentence-transformers
+    ports:
+      - "${R2R_PORT:-7272}:7272"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - r2r_data:/app/data
+      - ./r2r.toml:/app/r2r.toml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7272/v2/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - r2r-network
+
+  # Hatchet (optional - for workflow orchestration)
+  # Uncomment if you want advanced workflow management
+  # hatchet:
+  #   image: hatchet:latest
+  #   container_name: r2r-hatchet
+  #   environment:
+  #     DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/hatchet
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - r2r-network
+
+volumes:
+  postgres_data:
+    driver: local
+  r2r_data:
+    driver: local
+
+networks:
+  r2r-network:
+    driver: bridge

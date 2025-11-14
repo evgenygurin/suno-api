@@ -378,6 +378,128 @@ try {
 - ❌ Make synchronous file I/O
 - ❌ Leave browser contexts open
 
+## R2R Agent Integration
+
+This project now includes an **intelligent R2R RAG Agent** with MCP integration for enhanced development assistance.
+
+### What is the R2R Agent?
+
+The R2R Agent is an AI-powered assistant that:
+- 🔍 **Knows the entire codebase** through RAG (Retrieval-Augmented Generation)
+- 🕸️ **Understands code structure** through GraphRAG knowledge graph
+- 🧠 **Accumulates experience** through a memory system
+- 🤖 **Integrates directly with Claude** via MCP (Model Context Protocol)
+
+### Available Tools (16 MCP Instruments)
+
+When working on this project, you have access to these specialized tools:
+
+#### Search & Documentation (7 tools)
+- `search_documentation` - Semantic search across docs and code
+- `search_code_examples` - Find code examples and patterns
+- `find_test_examples` - Locate relevant tests
+- `ask_documentation` - Ask questions with AI-generated answers
+- `get_implementation_help` - Get help implementing features
+- `debug_with_rag` - Debug assistance with context
+- `explain_architecture` - Explain architectural aspects
+
+#### Experience Memory (4 tools)
+- `store_experience` - Save successful solutions and patterns
+- `retrieve_similar_experiences` - Find similar past situations
+- `reflect_on_patterns` - Analyze accumulated patterns
+- `get_memory_stats` - View memory statistics
+
+#### Knowledge Graph (5 tools)
+- `query_code_relationships` - Explore code connections
+- `find_dependencies` - Find module dependencies
+- `find_usages` - Find where code is used
+- `find_test_coverage` - Check test coverage
+- `explore_architecture_graph` - Explore overall architecture
+
+### When to Use the R2R Agent
+
+**Use these tools when:**
+- 🔍 **Searching for examples** → `search_code_examples("error handling pattern")`
+- 💡 **Understanding features** → `ask_documentation("How does CAPTCHA solving work?")`
+- 🐛 **Debugging issues** → `debug_with_rag("TimeoutError in browser.ts")`
+- 🏗️ **Planning refactoring** → `explore_architecture_graph("src/")`
+- 📚 **Learning from past** → `retrieve_similar_experiences("rate limit error")`
+- ✅ **Saving solutions** → `store_experience({ task: "Fixed timeout", outcome: "success" })`
+
+### R2R Agent Guidelines
+
+**When using the agent:**
+1. **Search first** - Use `search_documentation` before asking broad questions
+2. **Store successes** - Save successful solutions with `store_experience`
+3. **Check graph** - Use graph tools for refactoring and dependency analysis
+4. **Retrieve context** - Get similar experiences before solving new problems
+5. **Follow patterns** - Use `reflect_on_patterns` to identify best practices
+
+**Example workflow:**
+```typescript
+// 1. Search for examples
+search_code_examples("API endpoint with rate limiting")
+
+// 2. Get implementation help
+get_implementation_help({
+  feature_description: "Add rate limiting to /api/generate",
+  context: { file_path: "src/app/api/generate/route.ts" }
+})
+
+// 3. Check dependencies
+find_dependencies("src/app/api/generate/route.ts")
+
+// 4. Implement the feature
+// ... write code ...
+
+// 5. Store the experience
+store_experience({
+  context: { task: "Added rate limiting to API" },
+  action_taken: "Used upstash/ratelimit with Redis",
+  outcome: "success",
+  learned_pattern: "Rate limiting prevents abuse and improves stability",
+  tags: ["rate-limit", "api", "security"]
+})
+```
+
+### Agent Setup
+
+The R2R Agent is located in `r2r-mcp-server/`. To use it:
+
+```bash
+# Quick setup
+cd r2r-mcp-server
+./setup.sh
+
+# Index the documentation
+npm run ingest
+
+# Test the agent
+npm run cli search "CAPTCHA solving"
+npm run cli ask "How to add API endpoint?"
+```
+
+For full documentation, see:
+- `r2r-mcp-server/README.md` - Complete documentation
+- `r2r-mcp-server/QUICKSTART.md` - 5-minute quick start
+- `R2R-AGENT-SUMMARY.md` - Overview and capabilities
+
+### Agent-Aware Development
+
+The agent is **context-aware** of this project's specifics:
+- ✅ Follows all CLAUDE.md guidelines automatically
+- ✅ Knows about Playwright browser automation
+- ✅ Understands CAPTCHA solving with 2Captcha
+- ✅ Aware of Next.js App Router patterns
+- ✅ Respects TypeScript strict mode requirements
+- ✅ Uses Pino logging patterns
+
+**The agent enhances your capabilities but doesn't replace judgment:**
+- Always validate agent suggestions
+- Review code patterns from searches
+- Understand architectural decisions
+- Test implementations thoroughly
+
 ## Final Notes for Claude
 
 - **Be thorough**: Browser automation is finicky, double-check timing and error handling
@@ -385,5 +507,8 @@ try {
 - **Be pragmatic**: Perfect detection avoidance isn't possible, focus on reliability
 - **Be documentation-friendly**: Explain complex automation logic with comments
 - **Be TypeScript-strict**: Use proper types, avoid `any`
+- **Use the R2R Agent**: Leverage the agent's tools for faster, context-aware development
 
 When in doubt, ask for clarification rather than making assumptions about browser behavior or Suno.ai's interface!
+
+**Pro tip**: Start complex tasks by asking the agent: `ask_documentation("How should I approach [task]?")` to get project-specific guidance.

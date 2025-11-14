@@ -1,0 +1,188 @@
+# R2R Agent Configuration
+# Defines agent behavior, RAG settings, and memory policies
+
+name: "Suno API R2R Agent"
+version: "1.0.0"
+
+personality:
+  role: "Expert AI Assistant for Suno API Development"
+  
+  constraints:
+    - "Always follow CLAUDE.md guidelines strictly"
+    - "Never log cookies or API keys"
+    - "Never commit .env file"
+    - "Use TypeScript with strict types (no 'any')"
+    - "Implement proper error handling with try-catch"
+    - "Use Pino for structured logging"
+    - "Prefer editing existing files over creating new ones"
+    - "Never create documentation files unless explicitly requested"
+  
+  guidelines:
+    - "Be thorough - browser automation is finicky"
+    - "Be security-conscious - handles cookies and API keys"
+    - "Be pragmatic - perfect detection avoidance isn't possible"
+    - "Be documentation-friendly - explain complex automation logic"
+    - "Use proper async/await patterns"
+    - "Implement appropriate timeouts for browser operations"
+    - "Handle CAPTCHAs gracefully"
+    - "Follow Next.js App Router patterns (not Pages Router)"
+
+rag_settings:
+  # How many documents to retrieve for context
+  top_k: 5
+  
+  # Minimum similarity score (0-1) to include a document
+  similarity_threshold: 0.7
+  
+  # Document chunking
+  chunk_size: 512
+  chunk_overlap: 50
+  
+  # Search strategy: vector, keyword, or hybrid
+  search_mode: "hybrid"
+  
+  # Context window management
+  max_context_tokens: 8000
+  
+  # Re-ranking settings
+  use_reranker: true
+  reranker_top_k: 10
+
+memory_settings:
+  # How long to keep experiences (days)
+  retention_days: 90
+  
+  # Maximum number of experiences to store
+  max_items: 10000
+  
+  # Automatically reflect on patterns
+  auto_reflect: true
+  
+  # Reflection frequency (hours)
+  reflection_interval_hours: 24
+  
+  # Confidence threshold for experience retrieval
+  min_confidence: 0.6
+  
+  # Experience categories
+  categories:
+    - "bug-fix"
+    - "feature-implementation"
+    - "refactoring"
+    - "debugging"
+    - "optimization"
+    - "testing"
+    - "documentation"
+    - "deployment"
+    - "captcha-handling"
+    - "browser-automation"
+
+graph_settings:
+  # Enable GraphRAG
+  enabled: true
+  
+  # Maximum depth for graph traversal
+  max_depth: 3
+  
+  # Relationship types to track
+  relationship_types:
+    - "imports"        # Module A imports Module B
+    - "calls"          # Function A calls Function B
+    - "extends"        # Class A extends Class B
+    - "implements"     # Class A implements Interface B
+    - "tests"          # Test A tests Module B
+    - "depends_on"     # General dependency
+  
+  # Entity types
+  entity_types:
+    - "file"
+    - "module"
+    - "function"
+    - "class"
+    - "interface"
+    - "constant"
+  
+  # Graph enrichment
+  auto_enrich: true
+  enrichment_frequency: "weekly"
+
+# Priority areas for documentation
+priority_documentation:
+  high:
+    - "CLAUDE.md"              # Project rules
+    - "README.md"              # Project overview
+    - "src/app/api/**/*.ts"    # API routes
+    - "src/lib/captcha.ts"     # CAPTCHA handling
+    - "src/lib/logger.ts"      # Logging utilities
+  
+  medium:
+    - "src/**/*.ts"            # All source code
+    - "package.json"           # Dependencies
+    - "tsconfig.json"          # TypeScript config
+  
+  low:
+    - "tests/**/*.ts"          # Tests
+    - "*.md"                   # Other docs
+
+# Search optimization
+search_optimization:
+  # Boost certain file types in search results
+  file_type_boost:
+    markdown: 1.2
+    typescript: 1.0
+    javascript: 0.9
+  
+  # Boost recent files
+  recency_boost: 0.1
+  
+  # Boost frequently accessed files
+  frequency_boost: 0.15
+
+# Integration settings
+integration:
+  # MCP server
+  mcp:
+    enabled: true
+    port: 3001
+    host: "localhost"
+  
+  # R2R backend
+  r2r:
+    url: "http://localhost:7272"
+    collection: "suno-api-docs"
+    timeout_ms: 30000
+  
+  # Optional: Webhook for automatic re-ingestion
+  webhook:
+    enabled: false
+    url: "http://localhost:3001/ingest"
+    secret: "${WEBHOOK_SECRET}"
+
+# Performance tuning
+performance:
+  # Cache RAG responses
+  cache_responses: true
+  cache_ttl_seconds: 3600
+  
+  # Parallel ingestion
+  parallel_ingestion: true
+  max_parallel_jobs: 4
+  
+  # Batch operations
+  batch_size: 100
+
+# Monitoring and observability
+observability:
+  # Log level: debug, info, warn, error
+  log_level: "info"
+  
+  # Log destinations
+  log_to_file: false
+  log_file_path: "./logs/agent.log"
+  
+  # Metrics
+  enable_metrics: true
+  metrics_port: 9090
+  
+  # Tracing
+  enable_tracing: false
