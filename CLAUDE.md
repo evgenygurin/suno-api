@@ -2,6 +2,24 @@
 
 This file contains specific instructions and context for Claude AI assistant when working with the Suno API project.
 
+## 🎯 Quick Start for Claude
+
+**This project has full MCP (Model Context Protocol) integration!**
+
+You have access to these powerful tools:
+- 📚 **Context7**: `use context7 to find [library] documentation`
+- 🐙 **GitHub MCP**: Manage repos, PRs, issues, CI/CD workflows
+- 🤖 **Codegen.com**: AI-powered code generation and review
+- 🧠 **R2R Agent**: 16 specialized tools for codebase intelligence (see below)
+- 🔍 **Tavily**: Web search and content extraction
+
+**📖 MCP Guides:**
+- **Quick Start (5 min)**: [MCP-QUICKSTART.md](./MCP-QUICKSTART.md)
+- **Complete Guide**: [MCP-SETUP.md](./MCP-SETUP.md)
+- **R2R Agent Tools**: [r2r-mcp-server/README.md](./r2r-mcp-server/README.md)
+
+---
+
 ## Project Context for Claude
 
 You are working on **Suno API**, an unofficial TypeScript/Next.js wrapper for Suno.ai's music generation service. This project uses browser automation (Playwright) to interact with Suno.ai and automatically solves CAPTCHAs using 2Captcha service.
@@ -13,6 +31,7 @@ You are working on **Suno API**, an unofficial TypeScript/Next.js wrapper for Su
 - **React 18** with functional components and hooks
 - **Pino** for structured logging
 - **2Captcha** for CAPTCHA solving
+- **MCP Integrations**: Context7, GitHub MCP, Codegen.com, R2R Agent, Tavily
 
 ## Your Role as Claude
 

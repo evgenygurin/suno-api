@@ -1,0 +1,83 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "description": "Up-to-date documentation for libraries and frameworks"
+    },
+    "github": {
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_MCP_PAT}"
+      },
+      "description": "GitHub integration for repository management, issues, PRs, and CI/CD"
+    },
+    "codegen-remote": {
+      "transport": "http",
+      "url": "https://mcp.codegen.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${CODEGEN_API_KEY}",
+        "x-organization-id": "${CODEGEN_ORG_ID}",
+        "x-repo-id": "${CODEGEN_REPO_ID}"
+      },
+      "description": "Codegen.com AI-powered code generation and analysis"
+    },
+    "r2r-agent": {
+      "command": "npx",
+      "args": [
+        "--yes",
+        "--prefix",
+        "./r2r-mcp-server",
+        "tsx",
+        "./r2r-mcp-server/src/index.ts"
+      ],
+      "env": {
+        "R2R_API_URL": "${R2R_API_URL}",
+        "R2R_API_KEY": "${R2R_API_KEY}",
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}"
+      },
+      "description": "R2R RAG Agent with GraphRAG and memory for codebase intelligence"
+    },
+    "tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-tavily@latest"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+      },
+      "description": "Web search and content extraction"
+    }
+  },
+  "inputs": [
+    {
+      "id": "github_mcp_pat",
+      "description": "GitHub Personal Access Token for MCP",
+      "type": "promptString",
+      "password": true
+    },
+    {
+      "id": "codegen_api_key",
+      "description": "Codegen API Key",
+      "type": "promptString",
+      "password": true
+    },
+    {
+      "id": "codegen_org_id",
+      "description": "Codegen Organization ID",
+      "type": "promptString",
+      "password": false
+    },
+    {
+      "id": "codegen_repo_id",
+      "description": "Codegen Repository ID",
+      "type": "promptString",
+      "password": false
+    }
+  ]
+}
