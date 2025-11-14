@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
+import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
         }
       });
     } catch (error) {
-      console.error('Error fetching limit:', error);
+      logger.error({ error }, 'Error fetching limit');
 
       return new NextResponse(JSON.stringify({ error: 'Internal server error. ' + error }), {
         status: 500,

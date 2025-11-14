@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
+import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
         }
       });
     } catch (error: any) {
-      console.error('Error fetching persona:', error.response?.data || error.message);
+      logger.error({ error: error.response?.data || error.message }, 'Error fetching persona');
       const status = error.response?.status || 500;
       const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
 
