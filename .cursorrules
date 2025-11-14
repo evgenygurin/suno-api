@@ -1,0 +1,351 @@
+# Development Rules and Guidelines
+
+## General Development Principles
+
+### Code Quality
+- Write clean, maintainable, and well-documented code
+- Follow DRY (Don't Repeat Yourself) principles
+- Use meaningful variable and function names
+- Keep functions small and focused on a single responsibility
+- Write self-documenting code with clear intent
+
+### Version Control (Git/GitHub)
+- Write clear, descriptive commit messages in present tense
+- Use conventional commits format: `type(scope): description`
+  - Types: feat, fix, docs, style, refactor, test, chore
+- Keep commits atomic and focused on a single change
+- Always pull before pushing to avoid conflicts
+- Use feature branches for new development
+- Never commit sensitive data (API keys, passwords, tokens)
+- Review code before pushing
+
+### Code Review (GitHub)
+- Review PRs within 24 hours
+- Provide constructive feedback
+- Test changes locally when possible
+- Check for security vulnerabilities
+- Verify all CI checks pass before approval
+- Use GitHub's suggestion feature for minor fixes
+
+### CI/CD (CircleCI)
+- All tests must pass before merging
+- Maintain test coverage above 80%
+- Fix broken builds immediately
+- Monitor build times and optimize if needed
+- Use caching effectively to speed up builds
+- Keep CI configuration up to date
+
+### Project Management (Linear)
+- Update issue status regularly
+- Add clear descriptions and acceptance criteria
+- Link PRs to related issues
+- Break large tasks into smaller subtasks
+- Use labels and priorities appropriately
+- Comment on blockers immediately
+
+### Error Tracking (Sentry)
+- Monitor errors daily
+- Prioritize critical errors
+- Add context to error reports
+- Fix recurring errors promptly
+- Use breadcrumbs for debugging
+- Set up alerts for critical issues
+
+### AI Assistants (Claude, Codegen, Cursor)
+
+#### When using Claude Code:
+- Provide clear, specific instructions
+- Review generated code before committing
+- Verify security implications of AI-generated code
+- Test thoroughly before deployment
+- Use for code generation, refactoring, and documentation
+- Always review and understand the changes
+
+#### When using Codegen.com:
+- Define clear specifications
+- Validate generated patterns
+- Ensure consistency with existing codebase
+- Review architectural decisions
+- Use for boilerplate and scaffolding
+
+#### When using Cursor:
+- Leverage AI for code completion
+- Use chat for complex refactoring
+- Verify suggestions before accepting
+- Maintain code style consistency
+- Use for quick fixes and improvements
+
+## Technology-Specific Guidelines
+
+### TypeScript/JavaScript
+- Use TypeScript for type safety
+- Enable strict mode
+- Avoid `any` type, use `unknown` when needed
+- Use async/await over callbacks
+- Handle errors properly with try-catch
+- Use optional chaining and nullish coalescing
+
+### React/Next.js
+- Use functional components with hooks
+- Keep components small and reusable
+- Use proper prop types
+- Optimize re-renders with memo/useMemo/useCallback
+- Follow Next.js best practices for routing and data fetching
+- Use Server Components when possible
+- **IMPORTANT**: Use App Router (NOT Pages Router)
+- API routes should be in `src/app/api/` using route handlers
+
+### Playwright Browser Automation (Suno API Specific)
+- Use rebrowser-playwright-core for anti-detection
+- Support both Chromium and Firefox browsers
+- Always implement proper timeouts and waits
+- Handle hCaptcha solving via 2Captcha service
+- Implement retry logic with exponential backoff
+- Log all browser automation events for debugging
+- Clean up browser contexts properly
+- Use ghost-cursor for human-like interactions (optional)
+- Test browser automation thoroughly
+- Consider macOS for fewer CAPTCHAs in production
+
+### API Development
+- Follow RESTful conventions
+- Validate all inputs
+- Return appropriate HTTP status codes
+- Document endpoints properly
+- Implement rate limiting
+- Use proper authentication and authorization
+
+### Database
+- Use prepared statements to prevent SQL injection
+- Index frequently queried fields
+- Optimize complex queries
+- Use transactions for related operations
+- Regular backups
+- Monitor query performance
+
+### Security
+- Never expose sensitive data
+- Sanitize all user inputs
+- Use HTTPS everywhere
+- Implement proper authentication
+- Keep dependencies updated
+- Follow OWASP guidelines
+- Regular security audits
+- **CRITICAL**: Never log or commit SUNO_COOKIE or TWOCAPTCHA_KEY
+- **CRITICAL**: Never commit `.env` file
+- Validate all environment variables on startup
+- Implement rate limiting to prevent abuse
+- Monitor 2Captcha costs and usage
+
+### Testing
+- Write tests for new features
+- Maintain high test coverage
+- Use descriptive test names
+- Test edge cases and error conditions
+- Mock external dependencies
+- Run tests before committing
+
+### Documentation
+- Document complex logic
+- Keep README up to date
+- Document API endpoints
+- Add JSDoc comments for public APIs
+- Include usage examples
+- Update documentation with code changes
+
+### Performance
+- Optimize images and assets
+- Minimize bundle size
+- Use lazy loading when appropriate
+- Cache effectively
+- Monitor performance metrics
+- Profile and optimize bottlenecks
+
+## Workflow
+
+### Daily Routine
+1. Pull latest changes from main
+2. Check Linear for assigned tasks
+3. Check Sentry for critical errors
+4. Review pending PRs
+5. Update task status in Linear
+
+### Feature Development
+1. Create Linear issue with clear description
+2. Create feature branch from main
+3. Implement changes with tests
+4. Run linting and tests locally
+5. Create PR with detailed description
+6. Link PR to Linear issue
+7. Address review comments
+8. Merge after approval and CI success
+9. Update Linear issue status
+10. Monitor Sentry for new errors
+
+### Bug Fixing
+1. Reproduce the issue locally
+2. Write failing test
+3. Implement fix
+4. Verify test passes
+5. Check Sentry for related errors
+6. Create PR with fix
+7. Deploy and monitor
+
+### Code Review Checklist
+- [ ] Code follows style guidelines
+- [ ] Tests are included and passing
+- [ ] Documentation is updated
+- [ ] No security vulnerabilities
+- [ ] Performance impact considered
+- [ ] Error handling is proper
+- [ ] Linear issue is linked
+- [ ] CI checks pass
+
+## Communication
+
+### Commit Messages
+```
+feat(auth): add OAuth2 login support
+
+- Implement OAuth2 flow
+- Add login button
+- Update user model
+
+Closes LIN-123
+```
+
+### PR Descriptions
+- Clear title describing the change
+- Description of what and why
+- Steps to test
+- Screenshots for UI changes
+- Link to Linear issue
+- Note any breaking changes
+
+### Linear Issues
+- Clear, concise title
+- Detailed description
+- Acceptance criteria
+- Steps to reproduce (for bugs)
+- Labels and priority
+- Assigned team member
+
+## Best Practices by Tool
+
+### Claude Code
+- Use for complex code generation
+- Review security implications
+- Verify logic correctness
+- Test generated code thoroughly
+- Use for documentation generation
+
+### Codegen.com
+- Generate consistent code patterns
+- Scaffold new features quickly
+- Maintain code style uniformity
+- Review architectural decisions
+
+### Cursor
+- Quick code completions
+- Inline code suggestions
+- Refactoring assistance
+- Code explanation and learning
+
+### GitHub
+- Protected main branch
+- Required PR reviews
+- Status checks must pass
+- Squash merge for clean history
+
+### CircleCI
+- Fast feedback loops
+- Parallel test execution
+- Automated deployments
+- Environment-specific configs
+
+### Linear
+- Single source of truth for tasks
+- Regular status updates
+- Clear priorities
+- Proper sprint planning
+
+### Sentry
+- Error grouping and prioritization
+- Performance monitoring
+- Release tracking
+- Alert configuration
+
+## Emergency Procedures
+
+### Production Issues
+1. Check Sentry for error details
+2. Assess impact and severity
+3. Create hotfix branch from main
+4. Implement and test fix
+5. Fast-track PR review
+6. Deploy immediately
+7. Monitor for resolution
+8. Post-mortem analysis
+
+### Security Vulnerabilities
+1. Assess severity immediately
+2. Create private issue
+3. Implement fix ASAP
+4. Deploy hotfix
+5. Notify affected users if needed
+6. Document incident
+
+## Project-Specific Information (Suno API)
+
+### Key Environment Variables
+- `SUNO_COOKIE` - Suno.ai authentication cookie (REQUIRED)
+- `TWOCAPTCHA_KEY` - 2Captcha API key for solving hCaptcha (REQUIRED)
+- `BROWSER` - Browser to use: `chromium` or `firefox`
+- `BROWSER_GHOST_CURSOR` - Enable ghost-cursor for human-like mouse movements
+- `BROWSER_LOCALE` - Browser language (recommend `en` or `ru`)
+- `BROWSER_HEADLESS` - Run browser in headless mode (true/false)
+
+### API Endpoints
+Main endpoints to know:
+- `/api/generate` - Generate music from prompt
+- `/api/custom_generate` - Custom music generation (lyrics, style, title)
+- `/api/get_limit` - Get account quota (use for testing)
+- `/api/get` - Get music info by ID(s)
+- `/v1/chat/completions` - OpenAI-compatible endpoint
+
+### Common Gotchas
+- Browser automation is SLOW (5-30 seconds)
+- CAPTCHAs are unpredictable and cost money
+- Cookies expire and need refresh
+- Suno.ai can change UI anytime (breaking changes possible)
+- GPU acceleration doesn't work in Docker
+- macOS gets significantly fewer CAPTCHAs than Linux/Windows
+
+### Logging (Pino)
+- Use structured logging: `logger.info({ context }, 'message')`
+- NEVER use `console.log()`
+- Log levels: error, warn, info, debug
+- Always include context (endpoint, userId, duration)
+
+### Testing Checklist
+- [ ] Test API endpoint with curl/Postman
+- [ ] Verify CAPTCHA solving works
+- [ ] Test with both valid and invalid cookies
+- [ ] Check error handling and edge cases
+- [ ] Verify quota limits work correctly
+- [ ] Test TypeScript build: `npm run build`
+
+## Resources
+
+- **API Documentation**: https://suno.gcui.ai/docs
+- **Demo Site**: https://suno.gcui.ai
+- **GitHub Issues**: https://github.com/gcui-art/suno-api/issues
+- **2Captcha API Docs**: https://2captcha.com/2captcha-api
+- **Playwright Docs**: https://playwright.dev
+- **Next.js App Router**: https://nextjs.org/docs/app
+
+---
+
+Remember: Quality over speed. Write code you'd be proud to review.
+
+**For Suno API**: Always test browser automation carefully. CAPTCHAs are expensive!
