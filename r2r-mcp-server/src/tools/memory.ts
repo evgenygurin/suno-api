@@ -15,8 +15,6 @@ import {
 
 const logger = createModuleLogger('tools:memory');
 
-const EXPERIENCE_COLLECTION = 'suno-api-experiences';
-
 /**
  * Store a development experience for future reference
  * This creates organizational memory of solutions and patterns
