@@ -1,0 +1,22 @@
+# Sentry CLI Configuration Template
+# Copy this file to .sentryrc and fill in your actual values
+# IMPORTANT: .sentryrc is in .gitignore - NEVER commit it with real tokens!
+
+[auth]
+# Get your auth token from: https://sentry.io/settings/account/api/auth-tokens/
+# Required permissions: project:releases, org:read
+token=YOUR_SENTRY_AUTH_TOKEN
+
+[defaults]
+# Your Sentry organization slug (from URL: https://sentry.io/organizations/YOUR_ORG/)
+org=YOUR_SENTRY_ORG
+
+# Your Sentry project slug
+project=suno-api
+
+[upload]
+# Paths to include when uploading source maps
+include_paths=.next/static
+
+# Files to ignore during upload
+ignore_file=.gitignore
