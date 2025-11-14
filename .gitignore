@@ -32,6 +32,9 @@ yarn-error.log*
 # MCP configuration (may contain sensitive data)
 .mcp.json.local
 
+# Sentry configuration (contains auth token)
+.sentryrc
+
 # vercel
 .vercel
 

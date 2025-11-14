@@ -1,0 +1,128 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 10 AM UTC
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Check for updates
+        id: check-updates
+        run: |
+          npm outdated --json > outdated.json || true
+
+          if [ -s outdated.json ]; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            echo "## 📦 Outdated Dependencies" >> outdated-summary.md
+            echo "" >> outdated-summary.md
+            echo "\`\`\`json" >> outdated-summary.md
+            cat outdated.json >> outdated-summary.md
+            echo "\`\`\`" >> outdated-summary.md
+          else
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "✅ All dependencies are up to date!" >> outdated-summary.md
+          fi
+
+      - name: Create dependency update report
+        if: steps.check-updates.outputs.has_updates == 'true'
+        run: |
+          {
+            echo "# Dependency Update Report"
+            echo ""
+            echo "Generated on: $(date)"
+            echo ""
+            cat outdated-summary.md
+          } > dependency-report.md
+
+      - name: Upload dependency report
+        if: steps.check-updates.outputs.has_updates == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-update-report
+          path: dependency-report.md
+          retention-days: 30
+
+      - name: Create issue for dependency updates
+        if: steps.check-updates.outputs.has_updates == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('dependency-report.md', 'utf8');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'dependencies,automated'
+            });
+
+            // Check if there's already an open issue
+            const existingIssue = issues.find(issue =>
+              issue.title.includes('Dependency Updates Available')
+            );
+
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '📦 Dependency Updates Available',
+                body: report,
+                labels: ['dependencies', 'automated', 'maintenance']
+              });
+
+              core.info('✅ Created new dependency update issue');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## Updated Dependency Report\n\n${report}`
+              });
+
+              core.info('✅ Updated existing dependency update issue');
+            }
+
+  dependabot-auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge minor and patch updates
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
