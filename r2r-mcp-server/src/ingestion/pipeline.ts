@@ -218,6 +218,17 @@ async function scanProjectFiles(config: IngestionConfig): Promise<string[]> {
 }
 
 /**
+ * Binary file extensions that should be skipped
+ */
+const BINARY_EXTENSIONS = new Set([
+  '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp',
+  '.pdf', '.zip', '.tar', '.gz', '.rar', '.7z',
+  '.mp3', '.mp4', '.avi', '.mov', '.wav', '.flac',
+  '.exe', '.dll', '.so', '.dylib',
+  '.woff', '.woff2', '.ttf', '.eot', '.otf'
+]);
+
+/**
  * Process single file for ingestion
  */
 async function processFile(
@@ -225,7 +236,14 @@ async function processFile(
   config: IngestionConfig
 ): Promise<IngestionRequest[]> {
   const absolutePath = join(config.projectRoot, filePath);
-  
+  const ext = extname(filePath).toLowerCase();
+
+  // Skip binary files
+  if (BINARY_EXTENSIONS.has(ext)) {
+    logger.debug({ filePath, extension: ext }, 'Skipping binary file');
+    return [];
+  }
+
   try {
     const content = readFileSync(absolutePath, 'utf-8');
     const stats = statSync(absolutePath);
