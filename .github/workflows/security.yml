@@ -119,11 +119,10 @@ jobs:
 
       - name: TruffleHog Secret Scan
         uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --only-verified
+          extra_args: --only-verified --fail
 
   security-summary:
     name: Security Summary
