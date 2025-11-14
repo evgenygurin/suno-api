@@ -669,4 +669,29 @@ export class SunoClient {
       throw error;
     }
   }
+
+  /**
+   * Upload file from URL
+   * Downloads a file from the provided URL and stores it
+   */
+  public async uploadFileFromUrl(fileUrl: string): Promise<object> {
+    try {
+      const payload = {
+        fileUrl,
+      };
+
+      logger.info({ payload }, 'Uploading file from URL');
+
+      const response = await this.client.post('/file-url-upload', payload);
+
+      if (response.data.code !== 200) {
+        throw new Error(`API Error: ${response.data.msg}`);
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      logger.error({ error: error.response?.data || error.message }, 'Error uploading file from URL');
+      throw error;
+    }
+  }
 }

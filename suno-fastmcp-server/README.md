@@ -2,7 +2,7 @@
 
 > **FastMCP server for Suno AI music generation** - Complete music production workflow through the Model Context Protocol (MCP)
 
-A powerful MCP server exposing **16 Suno AI tools** (80% API coverage) to any MCP-compatible client (Claude Desktop, Cline, etc.). From simple text descriptions to professional-grade music production - generate, transform, extend, and export music with full creative control.
+A powerful MCP server exposing **17 Suno AI tools** (85% API coverage) to any MCP-compatible client (Claude Desktop, Cline, etc.). From simple text descriptions to professional-grade music production - generate, transform, extend, and export music with full creative control.
 
 ## 🎵 Features
 
@@ -21,6 +21,7 @@ A powerful MCP server exposing **16 Suno AI tools** (80% API coverage) to any MC
 ### Audio Processing
 - **🎧 Stem Separation**: Extract vocals and instrumentals
 - **💿 WAV Conversion**: Export to professional WAV format (44.1kHz, 16-bit) 🆕
+- **📥 File Upload**: Upload audio from public URLs for processing 🆕
 - **⏱️ Timestamped Lyrics**: Get karaoke-ready lyrics with timing
 
 ### Management & Monitoring
@@ -31,7 +32,7 @@ A powerful MCP server exposing **16 Suno AI tools** (80% API coverage) to any MC
 ### Technical Excellence
 - **🚀 Fast & Type-Safe**: Built with TypeScript and Zod validation
 - **🔄 Async Support**: Handle long-running generations efficiently
-- **📝 Comprehensive Docs**: 16 tools fully documented
+- **📝 Comprehensive Docs**: 17 tools fully documented
 
 ## 📋 Prerequisites
 
@@ -279,6 +280,19 @@ Check WAV conversion status and get download URL.
 - `task_id` (string, required): WAV conversion task ID (from convert_to_wav)
 
 **Returns:** Status, wavUrl, fileSize, duration, errorMessage
+
+#### `upload_file_from_url` 🆕
+Upload audio file from public URL to Suno storage.
+
+**Parameters:**
+- `file_url` (string, required): Public URL of audio file (MP3/WAV/FLAC/OGG, max 10MB)
+
+**Use Cases:**
+- Prepare external audio for style transformation (upload_cover)
+- Import audio for vocal/instrumental addition
+- Convert external URLs to Suno-compatible references
+
+**Returns:** Stored file URL and metadata for use in other API calls
 
 ### Utility Tools
 

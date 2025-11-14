@@ -1,6 +1,6 @@
 # Suno AI MCP Server - Complete Tools Reference
 
-> **Comprehensive documentation for all 16 MCP tools in the Suno AI FastMCP server**
+> **Comprehensive documentation for all 17 MCP tools in the Suno AI FastMCP server**
 
 This document provides exhaustive details about every tool available in the Suno MCP server, including parameters, use cases, examples, response formats, error handling, and advanced workflows.
 
@@ -25,9 +25,10 @@ This document provides exhaustive details about every tool available in the Suno
   - [generate_stems](#12-generate_stems)
   - [convert_to_wav](#13-convert_to_wav) 🆕
   - [get_wav_details](#14-get_wav_details) 🆕
+  - [upload_file_from_url](#15-upload_file_from_url) 🆕
 - [Utility Tools](#utility-tools)
-  - [list_models](#15-list_models)
-  - [get_api_status](#16-get_api_status)
+  - [list_models](#16-list_models)
+  - [get_api_status](#17-get_api_status)
 - [Advanced Workflows](#advanced-workflows)
 - [Error Handling](#error-handling)
 - [Best Practices](#best-practices)
@@ -36,7 +37,7 @@ This document provides exhaustive details about every tool available in the Suno
 
 ## Overview
 
-The Suno AI MCP server exposes **16 powerful tools** through the Model Context Protocol (MCP). These tools enable AI assistants to:
+The Suno AI MCP server exposes **17 powerful tools** through the Model Context Protocol (MCP). These tools enable AI assistants to:
 
 - 🎵 Generate music from text descriptions
 - 🎨 Create custom songs with fine-grained control
@@ -1348,9 +1349,151 @@ async def analyze_vocals(song_id):
 
 ---
 
+### 15. `upload_file_from_url`
+
+**Upload audio file from a public URL to Suno API storage**. 🆕
+
+#### Description
+
+Downloads an audio file from a publicly accessible URL and stores it in the Suno API system for use in other operations. This is essential for importing external audio files into Suno workflows, enabling style transformation, vocal addition, and instrumental generation on user-provided audio.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `file_url` | string (URL) | Yes | Public URL of audio file to upload. Must be publicly accessible without authentication. Supported formats: MP3, WAV, FLAC, OGG. Maximum size: 10MB. |
+
+#### Use Cases
+
+1. **Prepare External Audio for Style Transformation**
+   - Upload audio from external source
+   - Use stored URL with `upload_cover` for style transformation
+   - Perfect for genre experiments and remixes
+
+2. **Import Audio for Vocal Addition**
+   - Upload instrumental track from URL
+   - Use with `add_vocals` to add AI-generated vocals
+   - Create vocal versions of instrumental tracks
+
+3. **Batch Processing from External Sources**
+   - Upload multiple audio files from content repositories
+   - Convert external URLs to Suno-compatible references
+   - Automate audio import workflows
+
+4. **Convert External URLs to Suno References**
+   - Transform any public audio URL into Suno storage
+   - Enable use in other Suno API operations
+   - Simplify workflow integration
+
+#### Example Usage
+
+**Basic Upload:**
+```json
+{
+  "file_url": "https://example.com/audio/track.mp3"
+}
+```
+
+**Upload for Style Transformation:**
+```json
+{
+  "file_url": "https://mysite.com/original-instrumental.wav"
+}
+```
+
+#### Response Format
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "storedUrl": "https://cdn.suno.ai/...",
+    "fileName": "track.mp3",
+    "fileSize": 4523167,
+    "duration": "3:45",
+    "format": "mp3"
+  },
+  "message": "File uploaded successfully from URL"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Failed to download file from URL: Network timeout"
+}
+```
+
+#### Common Errors
+
+- **URL Not Accessible**: File URL requires authentication or is not publicly accessible
+- **File Too Large**: Audio file exceeds 10MB maximum size
+- **Unsupported Format**: File format is not MP3, WAV, FLAC, or OGG
+- **Network Error**: Failed to download file from the provided URL
+- **Invalid URL**: Malformed or invalid URL provided
+
+#### Requirements
+
+- ✅ URL must be publicly accessible (no authentication)
+- ✅ Supported formats: MP3, WAV, FLAC, OGG
+- ✅ Maximum file size: 10MB
+- ✅ URL must return valid audio content
+- ✅ Stable internet connection for download
+
+#### Workflow Integration
+
+**Example: Upload and Transform Workflow**
+```text
+1. upload_file_from_url
+   └─> Get stored URL
+
+2. upload_cover (using stored URL)
+   └─> Transform to new style
+
+3. get_audio_info
+   └─> Check transformation status
+```
+
+**Example: Upload and Add Vocals Workflow**
+```text
+1. upload_file_from_url (instrumental track)
+   └─> Get stored URL
+
+2. add_vocals (using stored URL)
+   └─> Add AI-generated vocals
+
+3. get_audio_info
+   └─> Check generation status
+```
+
+#### Best Practices
+
+1. **Verify URL Accessibility**: Ensure URL is publicly accessible before calling
+2. **Check File Size**: Verify file is under 10MB limit
+3. **Use Supported Formats**: Convert to MP3/WAV/FLAC/OGG if needed
+4. **Handle Errors Gracefully**: Implement retry logic for network errors
+5. **Store Result**: Save the stored URL for use in subsequent operations
+
+#### Performance
+
+- **Upload Time**: 5-30 seconds (depending on file size and network speed)
+- **Storage**: Files are stored temporarily for use in API operations
+- **Credits**: No credits consumed for file upload (credits used in subsequent operations)
+
+#### Notes
+
+- Files are stored temporarily and may be cleaned up after processing
+- The stored URL returned can be used immediately in other API calls
+- This is a prerequisite step for using external audio in Suno workflows
+- Does not perform any audio transformation - only storage
+
+---
+
 ## Utility Tools
 
-### 8. `list_models`
+### 16. `list_models`
 
 **Get information about available Suno AI music generation models and their capabilities**.
 
@@ -1539,7 +1682,7 @@ This tool always succeeds (returns hardcoded model list).
 
 ---
 
-### 9. `get_api_status`
+### 17. `get_api_status`
 
 **Check if the Suno API is accessible and get current configuration**.
 

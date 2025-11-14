@@ -920,6 +920,55 @@ server.addTool({
   },
 });
 
+/**
+ * Upload file from URL
+ *
+ * Downloads an audio file from a publicly accessible URL and stores it in the Suno API system.
+ * This is useful for providing external audio files to other Suno operations that require
+ * audio input (like upload_cover, add_vocals, add_instrumental).
+ *
+ * Use Cases:
+ * - Prepare external audio for style transformation (upload_cover)
+ * - Store audio files for vocal addition (add_vocals)
+ * - Import audio for instrumental generation (add_instrumental)
+ * - Convert external audio URLs to Suno-compatible references
+ * - Batch processing of audio from external sources
+ *
+ * Requirements:
+ * - URL must be publicly accessible (no authentication)
+ * - Supported formats: MP3, WAV, FLAC, OGG
+ * - Maximum file size: 10MB
+ * - URL must return valid audio content
+ *
+ * Returns file information including stored URL that can be used in other API calls.
+ */
+server.addTool({
+  name: 'upload_file_from_url',
+  description: 'Upload audio file from a public URL to Suno API storage. Downloads and stores the file for use in other operations (upload_cover, add_vocals, add_instrumental). Supports MP3/WAV/FLAC/OGG (max 10MB). Returns stored file URL and metadata. Essential for using external audio in Suno workflows.',
+  parameters: z.object({
+    file_url: z.string().url().describe('Public URL of the audio file to upload (e.g., "https://example.com/audio.mp3"). Must be publicly accessible without authentication. Supported formats: MP3, WAV, FLAC, OGG. Maximum size: 10MB.'),
+  }),
+  execute: async (args) => {
+    logger.info({ args }, 'Executing upload_file_from_url');
+
+    try {
+      const result = await sunoClient.uploadFileFromUrl(args.file_url);
+
+      return JSON.stringify({
+        success: true,
+        data: result,
+        message: 'File uploaded successfully from URL',
+      });
+    } catch (error: any) {
+      logger.error({ error: error.message }, 'Error in upload_file_from_url');
+      return JSON.stringify({
+        success: false,
+        error: error.message,
+      });
+    }
+  },
+});
+
 // ============================================================================
 // UTILITY TOOLS
 // ============================================================================
