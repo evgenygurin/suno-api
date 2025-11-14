@@ -1,0 +1,71 @@
+# R2R Configuration for Suno API Documentation
+# https://r2r-docs.sciphi.ai/
+
+[project]
+name = "suno-api-docs"
+description = "RAG system for Suno API project documentation"
+
+[completion]
+provider = "openai"
+model = "gpt-4o-mini"  # Fast and cost-effective
+temperature = 0.7
+max_tokens = 2000
+
+[embedding]
+provider = "openai"
+model = "text-embedding-3-small"  # Latest, faster, cheaper
+dimension = 1536
+batch_size = 128
+
+# Alternative: Use local embeddings (no API key needed, but slower)
+# [embedding]
+# provider = "sentence-transformers"
+# model = "sentence-transformers/all-MiniLM-L6-v2"
+# dimension = 384
+
+[vector_database]
+provider = "pgvector"
+collection_name = "suno_api_documents"
+
+[chunking]
+method = "recursive"
+chunk_size = 512
+chunk_overlap = 50
+separators = ["\n\n", "\n", " ", ""]
+
+[retrieval]
+search_strategy = "hybrid"  # Combines vector + keyword search
+search_limit = 10
+mmr_lambda = 0.5  # Balance between relevance and diversity
+
+[kg]  # Knowledge Graph settings
+enabled = true
+provider = "postgres"
+kg_extraction_model = "gpt-4o-mini"
+kg_enrichment = true
+
+[agent]
+system_instruction = """You are an expert AI assistant helping with the Suno API project.
+This project is a TypeScript/Next.js wrapper for Suno.ai using Playwright for browser automation.
+
+Key points:
+- Always follow CLAUDE.md guidelines
+- Use TypeScript with strict types
+- Implement proper error handling
+- Use Pino for structured logging
+- Handle CAPTCHA solving with 2Captcha
+- Follow Next.js App Router patterns
+
+Your goal is to provide accurate, context-aware help based on the project documentation."""
+
+[logging]
+level = "info"
+provider = "local"
+
+[auth]
+# Set to false for development, true for production
+require_authentication = false
+
+# API key for R2R (optional but recommended)
+# Generate with: openssl rand -hex 32
+# api_key = "your-secret-api-key"
