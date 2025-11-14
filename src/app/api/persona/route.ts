@@ -21,8 +21,12 @@ export async function GET(req: NextRequest) {
         });
       }
 
+      // Get API key from Authorization header or environment variable
+      const authHeader = req.headers.get('authorization');
+      const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
+
       const pageNumber = page ? parseInt(page) : 1;
-      const personaInfo = await (await sunoApi()).getPersonaPaginated(personaId, pageNumber);
+      const personaInfo = await (await sunoApi(apiKey)).getPersonaPaginated(personaId, pageNumber);
 
       return new NextResponse(JSON.stringify(personaInfo), {
         status: 200,
@@ -31,11 +35,13 @@ export async function GET(req: NextRequest) {
           ...corsHeaders
         }
       });
-    } catch (error) {
-      console.error('Error fetching persona:', error);
+    } catch (error: any) {
+      console.error('Error fetching persona:', error.response?.data || error.message);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
 
-      return new NextResponse(JSON.stringify({ error: 'Internal server error' }), {
-        status: 500,
+      return new NextResponse(JSON.stringify({ error: errorMessage }), {
+        status,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders

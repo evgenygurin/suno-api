@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
     }
 
 
-    const audioInfo = await (await sunoApi()).generate(userMessage.content, true, DEFAULT_MODEL, true);
+    // Get API key from Authorization header or environment variable
+    const authHeader = req.headers.get('authorization');
+    const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
+
+    const audioInfo = await (await sunoApi(apiKey)).generate(userMessage.content, true, DEFAULT_MODEL, true);
 
     const audio = audioInfo[0]
     const data = `## Song Title: ${audio.title}\n![Song Cover](${audio.image_url})\n### Lyrics:\n${audio.lyric}\n### Listen to the song: ${audio.audio_url}`
@@ -42,9 +46,12 @@ export async function POST(req: NextRequest) {
       headers: corsHeaders
     });
   } catch (error: any) {
-    console.error('Error generating audio:', JSON.stringify(error.response.data));
-    return new NextResponse(JSON.stringify({ error: 'Internal server error: ' + JSON.stringify(error.response.data.detail) }), {
-      status: 500,
+    console.error('Error generating audio:', error.response?.data || error.message);
+    const status = error.response?.status || 500;
+    const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
+    
+    return new NextResponse(JSON.stringify({ error: errorMessage }), {
+      status,
       headers: {
         'Content-Type': 'application/json',
         ...corsHeaders

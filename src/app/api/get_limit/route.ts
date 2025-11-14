@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from "next/server";
-import { cookies } from 'next/headers'
 import { sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
 
@@ -8,8 +7,11 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   if (req.method === 'GET') {
     try {
+      // Get API key from Authorization header or environment variable
+      const authHeader = req.headers.get('authorization');
+      const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
 
-      const limit = await (await sunoApi((await cookies()).toString())).get_credits();
+      const limit = await (await sunoApi(apiKey)).get_credits();
 
 
       return new NextResponse(JSON.stringify(limit), {

@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from "next/server";
-import { cookies } from 'next/headers'
 import { DEFAULT_MODEL, sunoApi } from "@/lib/SunoApi";
 import { corsHeaders } from "@/lib/utils";
 
@@ -11,7 +10,11 @@ export async function POST(req: NextRequest) {
       const body = await req.json();
       const { prompt, make_instrumental, model, wait_audio } = body;
 
-      const audioInfo = await (await sunoApi((await cookies()).toString())).generate(
+      // Get API key from Authorization header or environment variable
+      const authHeader = req.headers.get('authorization');
+      const apiKey = authHeader?.replace('Bearer ', '') || process.env.SUNO_API_KEY;
+
+      const audioInfo = await (await sunoApi(apiKey)).generate(
         prompt,
         Boolean(make_instrumental),
         model || DEFAULT_MODEL,
@@ -26,18 +29,12 @@ export async function POST(req: NextRequest) {
         }
       });
     } catch (error: any) {
-      console.error('Error generating custom audio:', JSON.stringify(error.response.data));
-      if (error.response.status === 402) {
-        return new NextResponse(JSON.stringify({ error: error.response.data.detail }), {
-          status: 402,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        });
-      }
-      return new NextResponse(JSON.stringify({ error: 'Internal server error: ' + JSON.stringify(error.response.data.detail) }), {
-        status: 500,
+      console.error('Error generating audio:', error.response?.data || error.message);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data?.msg || error.message || 'Internal server error';
+      
+      return new NextResponse(JSON.stringify({ error: errorMessage }), {
+        status,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders
