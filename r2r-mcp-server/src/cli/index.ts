@@ -94,7 +94,13 @@ program
       logger.info('Ingestion completed successfully');
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Ingestion failed');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Ingestion failed');
       process.exit(1);
     }
   });
@@ -125,13 +131,20 @@ program
       
       console.log('\n=== Search Results ===\n');
       response.data?.forEach((result, index) => {
-        console.log(`${index + 1}. ${result.metadata.file_path} (score: ${result.score.toFixed(3)})`);
-        console.log(`   ${result.content.substring(0, 200)}...\n`);
+        console.log(`${index + 1}. ${result.metadata?.file_path || 'Unknown'} (score: ${result.score?.toFixed(3) || 'N/A'})`);
+        const preview = result.content ? result.content.substring(0, 200) : 'No content';
+        console.log(`   ${preview}...\n`);
       });
       
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Search error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Search error');
       process.exit(1);
     }
   });
@@ -172,7 +185,13 @@ program
       
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'RAG query error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'RAG query error');
       process.exit(1);
     }
   });
@@ -215,7 +234,13 @@ memoryCommand
         process.exit(1);
       }
     } catch (error) {
-      logger.error({ error }, 'Store experience error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Store experience error');
       process.exit(1);
     }
   });
@@ -250,7 +275,13 @@ memoryCommand
       
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Search experiences error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Search experiences error');
       process.exit(1);
     }
   });
@@ -281,7 +312,13 @@ memoryCommand
       
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Memory stats error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Memory stats error');
       process.exit(1);
     }
   });
@@ -325,7 +362,13 @@ graphCommand
       
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Graph query error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Graph query error');
       process.exit(1);
     }
   });
@@ -355,7 +398,13 @@ graphCommand
       
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Dependencies query error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error({
+        error: errorMessage,
+        stack: errorStack,
+        errorType: error?.constructor?.name
+      }, 'Dependencies query error');
       process.exit(1);
     }
   });
