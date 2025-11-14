@@ -29,6 +29,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# MCP configuration (may contain sensitive data)
+.mcp.json.local
+
 # vercel
 .vercel
 
