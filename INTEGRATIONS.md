@@ -10,6 +10,7 @@ This document provides a comprehensive guide for all integrations configured in 
   - [Codegen.com](#codegencom)
   - [GitHub Actions](#github-actions)
   - [CircleCI](#circleci)
+  - [GitGuardian](#gitguardian)
   - [Sentry](#sentry)
   - [Linear](#linear)
   - [Cursor AI](#cursor-ai)
@@ -23,6 +24,7 @@ This document provides a comprehensive guide for all integrations configured in 
 This project is integrated with multiple services to provide:
 - ✅ **AI-powered code reviews** (Codegen.com)
 - ✅ **Automated CI/CD** (GitHub Actions, CircleCI)
+- ✅ **Secret scanning** (GitGuardian)
 - ✅ **Error tracking & monitoring** (Sentry)
 - ✅ **Project management** (Linear)
 - ✅ **Enhanced development** (Cursor AI with MCP)
@@ -245,6 +247,113 @@ curl -X POST \
   -H "Circle-Token: YOUR_TOKEN" \
   -H "Content-Type: application/json"
 ```
+
+---
+
+### GitGuardian
+
+**Automated secret scanning to prevent credential leaks.**
+
+#### Features
+- 🔐 Scans commits for secrets and API keys
+- 🚨 Prevents credential exposure in git history
+- 🔍 Detects 350+ types of secrets
+- 🛡️ Protects against security breaches
+- 🔄 Integrates with CircleCI pipelines
+
+#### Setup
+
+**1. Create GitGuardian Account**
+- Visit: https://dashboard.gitguardian.com
+- Sign up (free for public repos)
+- Navigate to API section
+
+**2. Generate API Key**
+```bash
+# Go to: https://dashboard.gitguardian.com/api/personal-access-tokens
+# Create new Personal Access Token
+# Copy the token (starts with "gg_")
+```
+
+**3. Configure CircleCI**
+```bash
+# Add to CircleCI project environment variables:
+# Project Settings → Environment Variables
+GITGUARDIAN_API_KEY=gg_your_api_key_here
+```
+
+**4. Verify Configuration**
+```yaml
+# Already configured in .circleci/config.yml:
+orbs:
+  ggshield: gitguardian/ggshield@1.1.4
+
+workflows:
+  build-and-test:
+    jobs:
+      - ggshield/scan:
+          name: ggshield-scan
+          base_revision: << pipeline.git.base_revision >>
+          revision: << pipeline.git.revision >>
+```
+
+#### Usage
+
+**Automatic scanning:**
+- ✅ Every push triggers secret scan
+- ✅ Pull requests are automatically checked
+- ✅ Build fails if secrets detected
+
+**Manual local scanning:**
+```bash
+# Install ggshield CLI
+pip install ggshield
+
+# Scan current directory
+ggshield secret scan path .
+
+# Scan specific commit
+ggshield secret scan commit-range HEAD~1..HEAD
+
+# Scan before committing
+ggshield secret scan pre-commit
+```
+
+#### Common Detections
+
+GitGuardian detects these secret types:
+- 🔑 **API Keys**: AWS, GCP, Azure, etc.
+- 🔐 **Credentials**: Passwords, tokens, certificates
+- 💳 **Payment**: Stripe, PayPal keys
+- 🗄️ **Databases**: Connection strings, passwords
+- 🐙 **Git**: GitHub tokens, SSH keys
+
+#### Troubleshooting
+
+**False Positives:**
+```bash
+# Add to .gitguardian.yaml to ignore:
+exclude:
+  - "**/*.test.ts"
+  - "**/mocks/**"
+
+matches-ignore:
+  - name: "Test API Key"
+    match: "sk_test_"
+```
+
+**Incident Response:**
+If a secret is detected:
+1. **Rotate the compromised secret immediately**
+2. Review commit history for exposure duration
+3. Check logs for unauthorized access
+4. Update secret in all environments
+5. Consider git history rewrite if needed
+
+#### Documentation
+- Official Docs: https://docs.gitguardian.com/
+- CircleCI Orb: https://circleci.com/developer/orbs/orb/gitguardian/ggshield
+- CLI Reference: https://docs.gitguardian.com/ggshield-docs/reference/ggshield
 
 ---
 
