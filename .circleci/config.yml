@@ -2,7 +2,7 @@
 #
 # This configuration provides CI/CD automation including:
 # - Code quality checks (linting, type checking)
-# - Security scanning
+# - Security scanning (npm audit, GitGuardian secret detection)
 # - Automated builds
 # - Sentry release tracking
 # - Codegen AI-powered reviews
@@ -14,6 +14,7 @@ version: 2.1
 # Orbs - reusable packages of configuration
 orbs:
   node: circleci/node@6.3.0
+  ggshield: gitguardian/ggshield@1.1.4
 
 # Executors - execution environments
 executors:
@@ -104,9 +105,14 @@ workflows:
   # Main workflow for all branches
   build-and-test:
     jobs:
+      - ggshield/scan:
+          name: ggshield-scan
+          base_revision: << pipeline.git.base_revision >>
+          revision: << pipeline.git.revision >>
       - quality-checks
       - security-scan
       - build:
           requires:
+            - ggshield-scan
             - quality-checks
             - security-scan
