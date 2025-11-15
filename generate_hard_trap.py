@@ -4,6 +4,9 @@ Hard Trap Moscow - Suno API Music Generator
 Generates aggressive hard trap track with Russian rap vocals
 """
 
+# Fix for Python 3.12+ OpenTelemetry shutdown error
+import otel_shutdown_fix  # noqa: F401
+
 import os
 import sys
 import time
