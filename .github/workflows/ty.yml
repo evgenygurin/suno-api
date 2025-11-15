@@ -1,0 +1,45 @@
+name: Ty Type Checks
+
+on:
+  pull_request:
+    branches:
+      - "develop"
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ty:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-environment
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v46.0.3
+
+      - name: Filter Python files
+        id: filter-python
+        run: |
+          python_files=()
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ $file == *.py ]]; then
+              python_files+=("${file}")
+            fi
+          done
+          echo "python_files=${python_files[*]}" >> $GITHUB_ENV
+
+      - name: Run ty
+        if: ${{ env.python_files != '' }}
+        run: |
+          echo "Running ty on changed files: ${{ env.python_files }}"
+          uv run ty check --output-format concise --python-version 3.12 --exclude "**/tests/**" --exclude "**/codegen_tests/**" ${{ env.python_files }}

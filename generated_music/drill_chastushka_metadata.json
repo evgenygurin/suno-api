@@ -1,0 +1,22 @@
+[
+  {
+    "id": "15a06495-8f12-4510-9751-96795ea8c86b",
+    "audioUrl": "https://musicfile.api.box/MTVhMDY0OTUtOGYxMi00NTEwLTk3NTEtOTY3OTVlYThjODZi.mp3",
+    "imageUrl": "https://musicfile.api.box/MTVhMDY0OTUtOGYxMi00NTEwLTk3NTEtOTY3OTVlYThjODZi.jpeg",
+    "title": "Дрилл-частушка",
+    "tags": "Russian drill-rap, ultra-aggressive, balalaika, accordion, 808 bass, sharp hi-hats, slap snare, частушечный напев, 142 BPM, D minor",
+    "modelName": "chirp-bluejay",
+    "duration": 118.08,
+    "createTime": 1763170441044
+  },
+  {
+    "id": "ea8a2b64-6cdd-4709-925a-e6310cfce248",
+    "audioUrl": "https://musicfile.api.box/ZWE4YTJiNjQtNmNkZC00NzA5LTkyNWEtZTYzMTBjZmNlMjQ4.mp3",
+    "imageUrl": "https://musicfile.api.box/ZWE4YTJiNjQtNmNkZC00NzA5LTkyNWEtZTYzMTBjZmNlMjQ4.jpeg",
+    "title": "Дрилл-частушка",
+    "tags": "Russian drill-rap, ultra-aggressive, balalaika, accordion, 808 bass, sharp hi-hats, slap snare, частушечный напев, 142 BPM, D minor",
+    "modelName": "chirp-bluejay",
+    "duration": 142.8,
+    "createTime": 1763170441044
+  }
+]

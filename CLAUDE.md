@@ -38,25 +38,32 @@ You have access to these powerful tools:
 
 ## Project Context for Claude
 
-You are working on **Suno API**, an unofficial TypeScript/Next.js wrapper for Suno.ai's music generation service. This project uses browser automation (Playwright) to interact with Suno.ai and automatically solves CAPTCHAs using 2Captcha service.
+You are working on **Suno API v2.0**, a TypeScript/Next.js client library that wraps the official Suno API from [sunoapi.org](https://sunoapi.org). This project provides a clean, type-safe interface for AI music generation with full Next.js App Router integration.
+
+### 🎉 Architecture v2.0 (Current)
+
+**Migration from v1.x**: This project has been completely rewritten to use the official Suno API instead of browser automation.
+
+**Previous (v1.x)**: Browser (Playwright) → Suno.ai web UI → CAPTCHA solving (2Captcha) ❌ Deprecated
+**Current (v2.0)**: Your API → [SunoAPI.org](https://sunoapi.org) → Suno.ai → AI Music ✅ **Active**
 
 ### Key Technologies You Should Know
 - **Next.js 14** with App Router (NOT Pages Router)
 - **TypeScript** with strict mode
-- **Playwright** with rebrowser-patches for anti-detection
-- **React 18** with functional components and hooks
+- **Axios** for HTTP client with proper typing
+- **React 18** with functional components and hooks (for frontend)
 - **Pino** for structured logging
-- **2Captcha** for CAPTCHA solving
+- **SunoAPI.org** - Official API wrapper (API key authentication)
 - **MCP Integrations**: Context7, GitHub MCP, Codegen.com, R2R Agent, Tavily
 
 ## Your Role as Claude
 
 ### When Helping with Code
-1. **Always consider browser automation context**: Remember that Playwright is dealing with a real browser and CAPTCHAs
-2. **Respect async operations**: Browser automation is heavily async - use proper await/Promise handling
-3. **Think about timing**: Browser actions need proper waits and timeouts
-4. **Consider anti-detection**: Use rebrowser-patches features to avoid detection
-5. **Handle errors gracefully**: Network issues, CAPTCHAs, and rate limits are common
+1. **Always consider API-based architecture**: This is a REST API client, not browser automation
+2. **Respect async operations**: API calls are async - use proper await/Promise handling
+3. **Think about HTTP semantics**: Proper status codes, headers, and error responses
+4. **Handle API errors gracefully**: Network issues, rate limits, and API errors are common
+5. **Use typed interfaces**: Leverage TypeScript interfaces for API requests/responses
 
 ### Code Generation Guidelines
 
@@ -105,33 +112,36 @@ export async function POST(request: NextRequest) {
 export default function handler(req, res) { ... }
 ```
 
-#### Playwright Automation
+#### SunoApi Client Usage
 ```typescript
-// ✅ GOOD: Proper browser automation with error handling
-async function solveCaptcha(page: Page) {
+// ✅ GOOD: Proper API client usage with error handling
+import { sunoApi } from '@/lib/SunoApi';
+
+async function generateMusic(prompt: string) {
   try {
-    // Wait for captcha iframe
-    await page.waitForSelector('iframe[src*="hcaptcha"]', { 
-      timeout: 10000 
-    });
-    
-    // Solve using 2Captcha
-    const solution = await solve2Captcha(page);
-    
-    // Apply solution with retry
-    await applyCaptchaSolution(page, solution);
-    
-    return { success: true };
+    const api = await sunoApi(); // Uses SUNO_API_KEY from env
+
+    // Generate music with proper typing
+    const results = await api.generate(
+      prompt,
+      false, // make_instrumental
+      'V3_5', // model
+      true // wait_audio
+    );
+
+    return { success: true, data: results };
   } catch (error) {
-    logger.error({ error }, 'CAPTCHA solving failed');
-    throw new CaptchaError('Failed to solve CAPTCHA', { cause: error });
+    if (error instanceof Error) {
+      logger.error({ error: error.message }, 'Music generation failed');
+    }
+    throw error;
   }
 }
 
-// ❌ BAD: No error handling or timeouts
-async function solveCaptcha(page) {
-  await page.click('.captcha');
-  // Missing error handling!
+// ❌ BAD: No error handling or typing
+async function generateMusic(prompt) {
+  const api = await sunoApi();
+  return api.generate(prompt); // Missing parameters and error handling!
 }
 ```
 
@@ -142,52 +152,54 @@ Check for these common issues:
 - [ ] Error handling with try-catch
 - [ ] Logging with Pino logger
 - [ ] Async/await used correctly
-- [ ] Environment variables accessed properly
+- [ ] Environment variables accessed properly (especially `SUNO_API_KEY`)
 - [ ] Secrets not hardcoded
-- [ ] CAPTCHA solving integrated correctly
+- [ ] SunoApi client initialized correctly
 - [ ] API responses follow consistent format
 - [ ] HTTP status codes are appropriate
+- [ ] Rate limiting and credit management considered
 
 ### When Debugging
 
 #### Common Issues to Check
 
-**1. CAPTCHA Problems**
-- Is 2Captcha API key valid and has balance?
-- Is the browser locale set correctly?
-- Are we using the right browser (Chromium/Firefox)?
-- Are rebrowser-patches working?
+**1. API Authentication**
+- Is `SUNO_API_KEY` environment variable set?
+- Is the API key valid and active?
+- Check API key format (should start with prefix from provider)
+- Verify API key has not expired
 
-**2. Cookie Issues**
-- Is SUNO_COOKIE environment variable set?
-- Has the cookie expired?
-- Is cookie format correct?
-- Are we passing cookie correctly in headers?
+**2. Credits & Rate Limits**
+- Does the account have sufficient credits?
+- Check credit balance with `api.get_credits()`
+- Are you hitting rate limits? (check response headers)
+- Monitor daily/monthly usage limits
 
 **3. API Errors**
-- Check logs with Pino
-- Verify API endpoint exists
-- Check request body format
-- Verify response handling
-- Look for rate limiting
+- Check logs with Pino for detailed error info
+- Verify request payload matches API schema
+- Check HTTP status codes (401=auth, 429=rate limit, 500=server error)
+- Look for specific error messages in response
+- Verify model names are correct (V3_5, V4, V4_5, V4_5PLUS, V5)
 
-**4. Browser Automation**
-- Check if page is loaded completely
-- Verify selectors are correct
-- Ensure proper waits/timeouts
-- Check for detection issues
+**4. Network & Timeout Issues**
+- Check network connectivity to sunoapi.org
+- Verify firewall/proxy settings
+- Adjust timeout values if needed (default: 30s)
+- Handle intermittent API availability
 
 ### When Adding New Features
 
 Follow this checklist:
-1. **Understand the Suno.ai flow**: What browser actions are needed?
-2. **Design API endpoint**: What parameters? What response?
+1. **Understand the SunoAPI.org endpoint**: Check [API documentation](https://docs.sunoapi.org)
+2. **Design API endpoint**: What parameters? What response format?
 3. **Implement with TypeScript**: Proper types and interfaces
-4. **Add error handling**: Handle all failure cases
-5. **Implement logging**: Log important events and errors
-6. **Test manually**: Use curl or Postman
-7. **Update Swagger docs**: Document new endpoint
-8. **Update README**: Add examples and documentation
+4. **Add to SunoApi class**: Add method with proper typing
+5. **Add error handling**: Handle all API failure cases
+6. **Implement logging**: Log important events and errors
+7. **Test manually**: Use curl or Postman
+8. **Update API routes**: Create/update Next.js API routes
+9. **Update README**: Add examples and documentation
 
 ### Specific Patterns to Use
 
@@ -235,70 +247,73 @@ console.log('something happened'); // NEVER DO THIS
 #### Environment Variables
 ```typescript
 // ✅ GOOD: With validation
-const sunoCookie = process.env.SUNO_COOKIE;
-if (!sunoCookie) {
-  throw new Error('SUNO_COOKIE environment variable is required');
+const sunoApiKey = process.env.SUNO_API_KEY;
+if (!sunoApiKey) {
+  throw new Error('SUNO_API_KEY environment variable is required');
 }
 
-// ✅ GOOD: With type safety
-const browserHeadless = process.env.BROWSER_HEADLESS === 'true';
+// ✅ GOOD: With type safety and default value
+const apiTimeout = parseInt(process.env.API_TIMEOUT || '30000', 10);
 
 // ❌ BAD: No validation
-const cookie = process.env.SUNO_COOKIE; // What if undefined?
+const apiKey = process.env.SUNO_API_KEY; // What if undefined?
 ```
 
 ## Important Context About This Project
 
-### Business Logic
-- Suno.ai doesn't have an official API yet
-- We reverse-engineer their web interface
-- Cookie authentication is required
-- hCaptcha challenges appear frequently
-- 2Captcha service costs money per solve
-- Rate limits exist (daily/monthly)
+### Business Logic (v2.0)
+- Uses official Suno API from [sunoapi.org](https://sunoapi.org)
+- API key authentication (no cookies!)
+- Credits-based billing system
+- Rate limits exist (daily/monthly based on plan)
+- Multiple model versions available (V3_5, V4, V4_5, V4_5PLUS, V5)
 
 ### Technical Constraints
-- Browser automation is slow (seconds, not milliseconds)
-- CAPTCHAs are unpredictable (can't avoid them)
-- Cookies expire and need refresh
-- Suno.ai can change their UI anytime (breaking changes)
-- GPU acceleration doesn't work in Docker
-- macOS gets fewer CAPTCHAs than Linux/Windows
+- API calls are fast (seconds for generation, not including music creation)
+- Credits cost money (check balance with `get_credits()`)
+- API availability depends on sunoapi.org uptime
+- Model selection affects generation time and quality
+- Some features require specific API endpoints (e.g., vocal separation)
 
 ### User Expectations
-- Fast API responses (minimize CAPTCHA triggers)
-- Reliable music generation
-- Multiple account support (via cookie override)
-- OpenAI-compatible API format option
-- Good error messages when things fail
+- Fast API responses (HTTP layer is quick)
+- Reliable music generation (depends on Suno.ai backend)
+- Clear error messages when API fails
+- Type-safe TypeScript interfaces
+- Good documentation with examples
+- Credit usage transparency
 
 ## Common Questions You Might Encounter
 
-**Q: Why is the API so slow?**
-A: Browser automation + CAPTCHA solving takes time (5-30 seconds typically)
+**Q: How fast is music generation?**
+A: HTTP API calls are fast (< 1s), but music creation takes 60-180 seconds depending on model and complexity.
 
-**Q: Can we avoid CAPTCHAs?**
-A: Not entirely. Using macOS and rebrowser-patches helps minimize them.
+**Q: Do I need a Suno.ai account?**
+A: No, you only need a sunoapi.org API key. They handle the Suno.ai integration.
 
-**Q: Why use Playwright instead of direct API calls?**
-A: Suno.ai doesn't have a public API. We must use their web interface.
+**Q: What's the difference between models (V3_5, V4, V5)?**
+A: Newer models (V4, V5) offer better quality and longer tracks (up to 8 min), but may cost more credits. V3_5 is fastest.
 
 **Q: Can we use this in production?**
-A: Yes, but be aware of limitations: rate limits, CAPTCHA costs, potential breaking changes.
+A: Yes! This is a production-ready API client. Be aware of: API rate limits, credit costs, and API availability.
 
 **Q: How to handle multiple concurrent requests?**
-A: Each request needs its own browser context. Implement proper queueing and concurrency limits.
+A: The Axios client supports concurrency naturally. Implement rate limiting on your end to avoid hitting API quotas.
+
+**Q: What if I run out of credits?**
+A: API calls will fail with appropriate error. Monitor credits with `api.get_credits()` and handle errors gracefully.
 
 ## Security Reminders
 
 When working on this project:
-- ⚠️ NEVER log cookies or API keys
-- ⚠️ NEVER commit `.env` file
-- ⚠️ Sanitize all user inputs
+- ⚠️ NEVER log API keys or sensitive credentials
+- ⚠️ NEVER commit `.env` file to git
+- ⚠️ Sanitize all user inputs (prompts, tags, etc.)
 - ⚠️ Validate environment variables on startup
 - ⚠️ Use HTTPS in production
-- ⚠️ Implement rate limiting
-- ⚠️ Monitor for abuse
+- ⚠️ Implement rate limiting to prevent abuse
+- ⚠️ Monitor API usage and costs
+- ⚠️ Rotate API keys periodically
 
 ## Testing Guidance
 
@@ -309,33 +324,45 @@ When working on this project:
 # Start dev server
 npm run dev
 
-# Test endpoint
-curl http://localhost:3000/api/get_limit
+# Test credit check endpoint
+curl http://localhost:3000/api/get_credits \
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **2. Full Flow Test**
 ```bash
+# Generate music (without waiting)
+curl -X POST http://localhost:3000/api/generate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{"prompt": "happy upbeat song", "make_instrumental": false, "wait_audio": false}'
+
+# Check result (use task_id from previous response)
+curl http://localhost:3000/api/get?ids=TASK_ID_1,TASK_ID_2 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**3. Credit Monitoring Test**
+```bash
+# Check credits before
+curl http://localhost:3000/api/get_credits
+
 # Generate music
 curl -X POST http://localhost:3000/api/generate \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "happy song", "make_instrumental": false, "wait_audio": false}'
+  -d '{"prompt": "test song", "wait_audio": true}'
 
-# Check result (use IDs from previous response)
-curl http://localhost:3000/api/get?ids=SONG_ID_1,SONG_ID_2
+# Check credits after (should be decreased)
+curl http://localhost:3000/api/get_credits
 ```
-
-**3. CAPTCHA Test**
-- Trigger action that requires new browser session
-- Check logs for CAPTCHA solving attempts
-- Verify 2Captcha balance decreases
-- Confirm operation completes successfully
 
 ### What to Test After Changes
 
 After modifying:
 - **API routes**: Test all affected endpoints
-- **Browser automation**: Test CAPTCHA solving
+- **SunoApi class**: Test with different parameters and models
 - **Types**: Run `npm run build` to check TypeScript
+- **Error handling**: Test with invalid API keys, insufficient credits
 - **Environment**: Test with different env var combinations
 
 ## Code Style Preferences
@@ -344,14 +371,14 @@ After modifying:
 ```typescript
 // 1. External libraries
 import { NextRequest, NextResponse } from 'next/server';
-import { chromium } from 'rebrowser-playwright-core';
+import axios from 'axios';
 
 // 2. Internal utilities
 import logger from '@/lib/logger';
-import { solveCaptcha } from '@/lib/captcha';
+import { sunoApi } from '@/lib/SunoApi';
 
 // 3. Types
-import type { MusicRequest } from '@/types';
+import type { AudioInfo, MusicRequest } from '@/types';
 ```
 
 ### Function Style
@@ -375,23 +402,31 @@ function doSomething(data) { ... }
 ### Error Handling Style
 ```typescript
 // ✅ Create custom error classes
-class CaptchaError extends Error {
-  constructor(message: string, public cause?: unknown) {
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public cause?: unknown
+  ) {
     super(message);
-    this.name = 'CaptchaError';
+    this.name = 'ApiError';
   }
 }
 
 // ✅ Use specific error handling
 try {
-  await solveCaptcha(page);
+  const api = await sunoApi();
+  const result = await api.generate(prompt);
 } catch (error) {
-  if (error instanceof CaptchaError) {
-    // Handle CAPTCHA-specific error
+  if (error instanceof ApiError) {
+    // Handle API-specific error (401, 429, 500, etc.)
+    logger.error({ statusCode: error.statusCode }, error.message);
   } else if (error instanceof Error) {
     // Handle generic error
+    logger.error({ error: error.message }, 'Unexpected error');
   } else {
     // Handle unknown error
+    logger.error({ error }, 'Unknown error occurred');
   }
 }
 ```
@@ -399,19 +434,20 @@ try {
 ## Performance Considerations
 
 ### Do's
-- ✅ Reuse browser contexts when possible
-- ✅ Implement connection pooling
-- ✅ Cache successful CAPTCHA sessions
-- ✅ Use streaming for large responses
-- ✅ Implement request queueing
-- ✅ Set appropriate timeouts
+- ✅ Reuse Axios client instances (single instance per app)
+- ✅ Implement request caching for frequently accessed data
+- ✅ Use `wait_audio: false` for async music generation
+- ✅ Poll task status with reasonable intervals (5-10s)
+- ✅ Implement request queueing to avoid rate limits
+- ✅ Set appropriate HTTP timeouts (default: 30s)
+- ✅ Monitor credit usage to avoid unexpected failures
 
 ### Don'ts
-- ❌ Create new browser for every request
-- ❌ Wait unnecessarily long
-- ❌ Block the event loop
-- ❌ Make synchronous file I/O
-- ❌ Leave browser contexts open
+- ❌ Create new SunoApi instance for every request
+- ❌ Poll task status too frequently (< 3s intervals)
+- ❌ Block the event loop with synchronous operations
+- ❌ Make concurrent requests beyond your rate limit
+- ❌ Store large audio files in memory
 
 ## 🔧 CI/CD & Integrations
 
@@ -587,27 +623,48 @@ For full documentation, see:
 
 The agent is **context-aware** of this project's specifics:
 - ✅ Follows all CLAUDE.md guidelines automatically
-- ✅ Knows about Playwright browser automation
-- ✅ Understands CAPTCHA solving with 2Captcha
+- ✅ Knows about v2.0 API-based architecture
+- ✅ Understands SunoAPI.org integration
 - ✅ Aware of Next.js App Router patterns
 - ✅ Respects TypeScript strict mode requirements
 - ✅ Uses Pino logging patterns
+- ✅ Knows about credit-based billing and rate limits
 
 **The agent enhances your capabilities but doesn't replace judgment:**
 - Always validate agent suggestions
 - Review code patterns from searches
 - Understand architectural decisions
 - Test implementations thoroughly
+- Monitor API usage and costs
 
 ## Final Notes for Claude
 
-- **Be thorough**: Browser automation is finicky, double-check timing and error handling
-- **Be security-conscious**: This handles cookies and API keys
-- **Be pragmatic**: Perfect detection avoidance isn't possible, focus on reliability
-- **Be documentation-friendly**: Explain complex automation logic with comments
-- **Be TypeScript-strict**: Use proper types, avoid `any`
+- **Be thorough**: API integration requires proper error handling for all failure scenarios
+- **Be security-conscious**: Protect API keys and monitor credit usage
+- **Be pragmatic**: Focus on reliability and user experience
+- **Be documentation-friendly**: Explain API integration patterns with clear comments
+- **Be TypeScript-strict**: Use proper types, avoid `any`, leverage interfaces
+- **Be cost-aware**: Always consider credit consumption and implement monitoring
 - **Use the R2R Agent**: Leverage the agent's tools for faster, context-aware development
 
-When in doubt, ask for clarification rather than making assumptions about browser behavior or Suno.ai's interface!
+When in doubt, check the [official API documentation](https://docs.sunoapi.org) or ask for clarification!
 
 **Pro tip**: Start complex tasks by asking the agent: `ask_documentation("How should I approach [task]?")` to get project-specific guidance.
+
+## 🎉 Migration from v1.x to v2.0
+
+If you encounter code or documentation referencing v1.x features:
+
+**Deprecated (v1.x)**:
+- ❌ Playwright browser automation
+- ❌ CAPTCHA solving with 2Captcha
+- ❌ Cookie-based authentication (`SUNO_COOKIE`)
+- ❌ `rebrowser-patches` anti-detection
+
+**Current (v2.0)**:
+- ✅ Clean HTTP API client
+- ✅ No browser automation needed
+- ✅ API key authentication (`SUNO_API_KEY`)
+- ✅ Official SunoAPI.org integration
+
+**See README.md** for full v2.0 migration guide and new features.

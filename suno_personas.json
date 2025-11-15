@@ -1,0 +1,29 @@
+{
+  "Дрилл-частушка": {
+    "name": "Дрилл-частушка",
+    "style": "Russian drill-rap, ultra-aggressive",
+    "model": "FUZZ-2.0",
+    "bpm": 142,
+    "key": "D Minor",
+    "vocal_characteristics": "snarling, aggressive Russian vocals, частушечный напев",
+    "instrumental_elements": [
+      "tight and clear 808 with strong sub",
+      "clipped midrange grit",
+      "balalaika motifs",
+      "accordion stabs",
+      "sharp hats",
+      "slap snare"
+    ],
+    "mixing_notes": "cold dark mix, tight sidechain pump under kick, precise note definition with short glide",
+    "tags": [
+      "russian-drill",
+      "частушки",
+      "балалайка",
+      "808-bass",
+      "aggressive"
+    ],
+    "description": "Fusion of Russian drill with traditional chastushka (folk couplets). Aggressive 808s meet balalaika and accordion.",
+    "created_at": "2025-11-15T02:38:19.534281",
+    "track_ids": []
+  }
+}
