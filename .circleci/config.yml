@@ -15,6 +15,7 @@ version: 2.1
 orbs:
   node: circleci/node@6.3.0
   ggshield: gitguardian/ggshield@1.1.4
+  sentry: sentry/sentry-cli@2.0.0
 
 # Executors - execution environments
 executors:
@@ -98,6 +99,85 @@ jobs:
           path: .next
           destination: build
 
+  # Job 4: Codegen AI Review
+  codegen-review:
+    executor: node-executor
+    steps:
+      - checkout
+      - install-dependencies
+
+      - run:
+          name: Install Codegen CLI
+          command: pip install codegen-ai
+
+      - run:
+          name: Run Codegen AI Review
+          command: |
+            if [ -n "$CODEGEN_API_KEY" ]; then
+              echo "Running Codegen AI code review..."
+              codegen claude "Review the recent changes in this repository. Focus on code quality, potential bugs, and best practices." \
+                --org-id "${CODEGEN_ORG_ID}" || true
+              echo "✅ Codegen review completed"
+            else
+              echo "⚠️  CODEGEN_API_KEY not set, skipping AI review"
+            fi
+
+  # Job 5: Sentry Release Tracking
+  sentry-release:
+    executor: node-executor
+    steps:
+      - checkout
+      - install-dependencies
+
+      - run:
+          name: Create Sentry Release
+          command: |
+            if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+              # Install Sentry CLI
+              curl -sL https://sentry.io/get-cli/ | bash
+
+              # Set release version to git SHA
+              export SENTRY_RELEASE="${CIRCLE_SHA1}"
+              export SENTRY_ORG="${SENTRY_ORG:-laptop-dev}"
+              export SENTRY_PROJECT="${SENTRY_PROJECT:-suno-api}"
+
+              echo "Creating Sentry release: $SENTRY_RELEASE"
+
+              # Create new release
+              sentry-cli releases new "$SENTRY_RELEASE" \
+                --org "$SENTRY_ORG" \
+                --project "$SENTRY_PROJECT"
+
+              # Associate commits
+              sentry-cli releases set-commits "$SENTRY_RELEASE" \
+                --org "$SENTRY_ORG" \
+                --auto
+
+              # Upload source maps (Next.js build artifacts)
+              if [ -d ".next" ]; then
+                echo "Uploading source maps..."
+                sentry-cli sourcemaps upload \
+                  --org "$SENTRY_ORG" \
+                  --project "$SENTRY_PROJECT" \
+                  --release "$SENTRY_RELEASE" \
+                  .next/static
+              fi
+
+              # Finalize release
+              sentry-cli releases finalize "$SENTRY_RELEASE" \
+                --org "$SENTRY_ORG" \
+                --project "$SENTRY_PROJECT"
+
+              # Create deployment
+              sentry-cli releases deploys "$SENTRY_RELEASE" new \
+                --env "${SENTRY_ENVIRONMENT:-production}" \
+                --org "$SENTRY_ORG"
+
+              echo "✅ Sentry release tracking completed"
+            else
+              echo "⚠️  SENTRY_AUTH_TOKEN not set, skipping release tracking"
+            fi
+
 # Workflows - orchestrate jobs
 workflows:
   version: 2
@@ -111,8 +191,19 @@ workflows:
           revision: << pipeline.git.revision >>
       - quality-checks
       - security-scan
+      - codegen-review:
+          context: codegen
       - build:
           requires:
             - ggshield-scan
             - quality-checks
             - security-scan
+      - sentry-release:
+          context: sentry
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - main
+                - master

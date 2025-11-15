@@ -225,15 +225,23 @@ Better for shared secrets across projects:
 Configuration file: `.circleci/config.yml`
 
 **Jobs:**
-- `quality-checks` - Linting and type checking
-- `security-scan` - Vulnerability scanning
-- `build` - Next.js build
-- `sentry-release` - Create Sentry release
-- `codegen-review` - AI code review (PRs only)
+1. `ggshield-scan` - GitGuardian secret scanning (runs first)
+2. `quality-checks` - ESLint and TypeScript type checking
+3. `security-scan` - npm audit for vulnerability detection
+4. `codegen-review` - AI-powered code review with Codegen.com (runs in parallel)
+5. `build` - Next.js production build (requires all checks to pass)
+6. `sentry-release` - Create Sentry release and upload source maps (main/master only)
 
 **Workflows:**
-- `build-and-test` - Runs on all branches
-- `weekly-security-scan` - Scheduled security checks
+- `build-and-test` - Main workflow running on all branches
+  - Parallel execution: quality-checks, security-scan, codegen-review, ggshield-scan
+  - Build runs after all checks pass
+  - Sentry release tracking runs after successful build (main/master only)
+
+**Orbs Used:**
+- `circleci/node@6.3.0` - Node.js environment
+- `gitguardian/ggshield@1.1.4` - Secret scanning
+- `sentry/sentry-cli@2.0.0` - Sentry release management
 
 #### Usage
 
@@ -471,10 +479,73 @@ transaction.finish();
 **GitHub Actions:**
 - Source maps uploaded automatically during build
 - Releases created with git SHA
+- See: `.github/workflows/ci.yml`
 
-**CircleCI:**
-- `sentry-release` job creates releases
-- Associates commits with deployments
+**CircleCI (Primary):**
+
+The `sentry-release` job in CircleCI handles comprehensive release tracking:
+
+1. **Creates Sentry Release** with git SHA as version
+2. **Associates Commits** automatically with the release
+3. **Uploads Source Maps** from Next.js build (`.next/static/`)
+4. **Finalizes Release** to mark it ready for deployment tracking
+5. **Creates Deployment** notification with environment (production)
+
+**Configuration:**
+
+```yaml
+# .circleci/config.yml
+orbs:
+  sentry: sentry/sentry-cli@2.0.0
+
+jobs:
+  sentry-release:
+    executor: node-executor
+    steps:
+      - checkout
+      - install-dependencies
+      - run:
+          name: Create Sentry Release
+          command: |
+            # Install sentry-cli
+            curl -sL https://sentry.io/get-cli/ | bash
+
+            # Create release with git SHA
+            export SENTRY_RELEASE="${CIRCLE_SHA1}"
+            sentry-cli releases new "$SENTRY_RELEASE"
+
+            # Associate commits
+            sentry-cli releases set-commits "$SENTRY_RELEASE" --auto
+
+            # Upload source maps
+            sentry-cli sourcemaps upload --release "$SENTRY_RELEASE" .next/static
+
+            # Finalize and deploy
+            sentry-cli releases finalize "$SENTRY_RELEASE"
+            sentry-cli releases deploys "$SENTRY_RELEASE" new -e production
+
+workflows:
+  build-and-test:
+    jobs:
+      - sentry-release:
+          context: sentry  # Uses CircleCI context for secrets
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - main
+                - master
+```
+
+**CircleCI Context Setup:**
+
+1. Go to: `Organization Settings → Contexts`
+2. Create context named: `sentry`
+3. Add environment variables:
+   - `SENTRY_ORG` - Your organization slug
+   - `SENTRY_PROJECT` - Project name (suno-api)
+   - `SENTRY_AUTH_TOKEN` - Auth token from Sentry
 
 #### Troubleshooting
 
