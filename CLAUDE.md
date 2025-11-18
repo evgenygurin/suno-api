@@ -28,6 +28,7 @@ You have access to these powerful tools:
 - [MCP Quick Start (5 min)](./MCP-QUICKSTART.md)
 - [Complete MCP Setup Guide](./MCP-SETUP.md)
 - [R2R Agent Tools](./r2r-mcp-server/README.md)
+- [Fix MCP Python Warnings](./MCP-PYTHON-FIX.md) - Suppress harmless OpenTelemetry errors
 
 **Integrations:**
 - **[INTEGRATIONS.md](./INTEGRATIONS.md)** - Complete integration guide ⭐
